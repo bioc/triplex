@@ -1,0 +1,520 @@
+%\VignetteIndexEntry{Triplex User Guide}
+%\VignetteKeywords{Triplex, DNA, Sequence, Biostrings} 
+%\VignettePackage{triplex}
+
+\documentclass[a4paper]{article}
+\usepackage[utf8]{inputenc}
+
+\title{Triplex: User Guide}
+\author{Matej Lexa, Tomáš Martínek, Jiří Hon}
+
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+The R triplex package is essentially an R interface to the underlying C
+implementation of a dynamic-programming search strategy of the same name
+published in~\cite{Lexa2011}. The main functionality of the original program
+is to detect positions of subsequences in a much larger sequence, where these
+subsequences are
+likely to fold into an intramolecular triplex (H-DNA). The evaluation is
+based on the number of canonical nucleotide triplets that can form from
+nucleotides in such subsequence .  In
+creating this incarnation in R, we extended the basic functionality, to also
+include the calculation of likely base-pairing in the triple helices. This
+allowed us to extend the functionality of the package towards visualization
+showing the exact base-pairing in 2D or 3D as published
+earlier~\cite{Rajdl12}.
+
+The rest of this vignette is organized as follows: The basic usage of the
+package for triplex detection is described in section~\ref{sec:detection}.
+Two methods for visualization of detected triplexes in 2D and 3D are shown in
+section~\ref{sec:visualization}. Section~\ref{sec:export} describes
+techniques for the conversion of search results into other types of objects
+such as {\it GRanges} or {\it DNAStringSet}, that can be further exported
+into GFF3 or FASTA files. The vignette is concluded with
+section~\ref{sec:real} showing triplex package usage on a real genomic
+sequence from {\it BSGenome}. 
+
+
+\newpage
+
+\section{Detection}
+\label{sec:detection}
+
+As usual, before first package use, it is necessary to load the triplex 
+library using the following command:
+
+<<>>=
+library(triplex)
+@
+
+Identification of potential intramolecular triplex-forming sequences in DNA
+is performed using the {\it triplex.search} function.  This function has one
+required parameter representing the studied DNA sequence in the form of a
+{\it DNAString} object and several modifying options with predefined values
+(see {\it triplex.search} help page).
+
+Based on triplex position (forward or reverse strand) and its third strand
+orientation, up to 8 types of triplexes are distinguished by the {\it triplex.search} function. All
+these triplex types are depicted on figure~\ref{fig:types}. By default, the
+function detects all 8 types, however this behaviour can be changed by
+setting {\it type} parameter to arbitrary value or a subset of values in the 
+range 0 to 7.
+
+\begin{figure}[h]
+\centering
+   \includegraphics[width=.8\linewidth]{fig/types.pdf}
+   \caption{Triplex types}
+   \label{fig:types}
+\end{figure}
+
+\subsection*{Example 1: Basic triplex detection}
+
+As a simple example, let's find all types of intramolecular triplexes in the DNA
+sequence {\it TTGGGGAAAGCAATGCCAGGCAGGGGGTTCCTTTCGTTACGGTCCGTCCC}:
+
+<<>>=
+seq <- DNAString("TTGGGGAAAGCAATGCCAGGCAGGGGGTTCCTTTCGTTACGGTCCGTCCC")
+triplex.search(seq)
+@
+
+Detected triplexes are returned in the form of a {\it TriplexViews} class,
+which represents the basic container for storing a set of views on the same
+input sequence similarly to {\it XStringView} object (in fact {\it
+TriplexViews} only extends the {\it XStringView} class with the number of
+displayed columns). Each triplex view is defined by start locations, width,
+score, P-value, number of insertions, type, strand, loop start position and
+loop end position. 
+
+Please note, that the strand orientation depends on triplex type only. The
+{\it triplex.search} function assumes that input DNA sequence represents
+the forward strand.
+
+\subsection*{Example 2: Selection of a specific triplex type}
+
+Let's reduce the searching procedure to triplex type 1 only, using the
+following command. Please note, that the output list contains potential
+triplexes of type 1 only.
+
+<<>>=
+triplex.search(seq, type=(1))
+@
+
+
+The basic requirements for shape or length of detected triplexes can be
+defined using four parameters: {\it min\_len}, {\it max\_len}, {\it
+min\_loop} and {\it max\_loop}. While {\it min\_len} and {\it max\_len}
+specify the length of triplex stems composed of individual triplets, {\it
+min\_loop} and {\it max\_loop} parameters define the range of lengths for
+unpaired loops at the top of detected triplexes.  A graphical representation
+of these parameters is shown in figure~\ref{fig:triplex}.  Please note that
+these parameters also impacts the overall computation time. For longer
+triplexes, larger space has to be explored and thus more computation time is
+consumed.
+
+\begin{figure}[h]
+\centering
+   \includegraphics[width=.6\linewidth]{fig/triplex.pdf}
+   \caption{Triplex scheme}
+   \label{fig:triplex}
+\end{figure}
+
+\subsection*{Example 3: Definition of triplex shape}
+
+Let's modify the previous example by specifying minimal and maximal triplex
+lengths. Please, execute the following command and note that only one of the 
+two triplexes detected before satisfies these conditions.
+
+<<>>=
+triplex.search(seq, min_len=10, max_len=20)
+@
+
+The quality of each triplex is defined by its score value. A higher score
+value represents a higher-quality triplex. This quality is decreased by
+several types of imperfections at the level of triplets, such as character
+(nucleotide) mismatch, insertion, deletion, isomorphic group change etc.
+Penalization constants for these imperfections can be set up using the
+following parameters: {\it mis\_pen}, {\it ins\_pen}, {\it iso\_pen}, {\it
+iso\_bonus} and {\it dtwist\_pen}. Detailed information
+about the scoring function and penalization parameters can be found
+in~\cite{Lexa2011}. It is highly recommended to see~\cite{Lexa2011} prior to
+changing any penalization parameter.
+
+\subsection*{Example 4: Scoring function modification}
+
+Let's modify the previous example by reducing the penalization for 
+isomorphic group change from value 5 to 2. Please execute the following 
+command and note that calculated score values have changed.
+
+<<>>=
+triplex.search(seq, iso_pen=2)
+@
+
+
+The {\it triplex.search} function can result in a large list containing tens
+of thousands of potential triplexes. The size of these results can be reduced
+using two filtration mechanisms: (1) by specifying the minimal acceptable
+score value using {\it min\_score} parameter or (2) by specifying maximum
+acceptable P-value of results using {\it p\_value} parameter. The P-value
+represents the probability of occurrence of detected triplexes in a random
+sequence.  By default, only triplexes with P-value equal or less than 0.05
+are reported.  Calculation of P-value depends on two extreme value
+distribution parameters {\it lambda} and {\it mi}. It is highly recommended
+to see~\cite{Lexa2011} prior changing the {\it lambda} or {\it mi}
+parameters.
+
+\subsection*{Example 5: Filtration of results}
+
+Let's modify the previous example to show only triplexes with score values 14
+or higher.  Please execute the following command and note that only one of
+the two previously detected triplexes satisfies this condition.
+
+<<>>=
+triplex.search(seq, min_score=14)
+@
+
+\newpage
+
+\section{Visualization}
+\label{sec:visualization}
+
+Besides triplex detection, the {\it triplex} package offers also
+visualization of detected results. Three major methods of visualization are
+supported:
+
+\begin{enumerate}
+
+   \item {\it Triplex alignment (text)}: Selected triplex is shown in basic
+   text format representing the alignment of all of its strands. The output
+   consists of four sequences: {\it plus} and {\it minus} sequences
+   representing 5' to 3' and 3' to 5' DNA strands of the detected triplex; {\it
+   anti/para-plus/minus} sequence representing the third triplex strand
+   aligned to {\it plus} or {\it minus} strand in {\it antiparallel} or {\it
+   parallel} fashion; and finally {\it loop} sequence representing the unpaired
+   loop.  Please, note that all eight triplex types shown in
+   figure~\ref{fig:types} can be represented using four types of alignments,
+   because each alignment can correspond to triplex detected either on forward
+   or reverse DNA strand.
+
+   \item {\it 2D diagram (graphical)}: Selected triplex is shown in a 2D diagram
+   displaying the individual triplets (based on Watson-Crick and Hoogsteen
+   base paring) and the loop composed of unpaired nucleotides. 
+
+   \item {\it 3D model (graphical)}: Selected triplex is shown in 3D. At first, a model is
+   calculated and then the result is displayed using the {\it RGL} package, 
+   which allows you to manipulate the triplex 3D model (zoom in, zoom out, 
+   rotation, etc.).
+
+\end{enumerate}
+
+\subsection*{Example 6: Triplex visualization}
+
+Let's suppose, we would like to display an alignment (in text format),
+a 2D diagram and a 3D model of the best detected triplex from the previous
+examples.  At first, it is suitable to store the results of calling the {\it
+triplex.search} function into an auxiliary variable.
+
+<<>>=
+t <- triplex.search(seq)
+t
+@
+
+Then, call {\it triplex.alignment} function on the first item of the list.
+Please note that similarly to other DNA multiple sequence alignments the
+output of the {\it triplex.alignment} method is stored as {\it DNAStringSet}
+object. Also note that the {\it loop} sequence is always the last one and
+unaligned to the previous three sequences.
+
+<<>>=
+triplex.alignment(t[1])
+@
+
+Then, call {\it triplex.diagram} function on the same item of the list.
+Please note that at first the triplex alignment is calculated and printed into
+R console and then the graphical output is displayed in a separate window. R
+provides methods to redirect the output to other suitable devices, such as
+files (see {\it png()}, for example).
+
+
+\setkeys{Gin}{width=.6\linewidth}
+\begin{figure}[h]
+\centering
+<<fig=TRUE>>=
+triplex.diagram(t[1])
+@
+   \caption{2D diagram of a detected triplex}
+   \label{fig:triplexvis2d}
+\end{figure}
+
+\newpage
+
+Finally, let's display the 3D structure of the same triplex using {\it
+triplex.3D} function. Please note that the result will be displayed in
+separate graphical window using the {\it RGL} library. The 3D model is based 
+on optimizing angles and distances present in the molecule to be as close as 
+possible to tabulated values (see \cite{Rajdl12} for more information).  
+
+<<eval=FALSE>>=
+triplex.3D(t[1])
+@
+
+<<echo=FALSE>>=
+triplex.alignment(t[1])
+@
+
+\begin{figure}[h!]
+\centering
+   \includegraphics[width=.6\linewidth]{fig/triplex3d}
+   \caption{3D scheme of detected triplex}
+   \label{fig:triplexvis3d}
+\end{figure}
+
+\newpage
+
+\section{Exporting Results}
+\label{sec:export}
+
+As mentioned above, the results of detection are stored in the {\it TriplexView}
+object. Because the {\it TriplexView} class is only an extension of the {\it
+XStringViews} class, all operations applied to the {\it XStringViews} object 
+can also be applied to the {\it TriplexView} object as well.
+
+Additionaly, {\it TriplexView} class contains a conversion function to create 
+{\it GRanges} objects. Thus, all detected triplexes can be transformed
+into elements of a {\it GRanges} object and saved as a GFF3 file, for example.
+
+\subsection*{Example 7: GRanges conversion}
+
+In this example, the output of the {\it triplex.search} function will be stored
+in a {\it GRanges} object and further exported as a GFF3 file. At first,
+let's do the conversion using the following command:
+
+<<>>=
+gr <- as(t, "GRanges")
+gr
+@
+
+Please note that the chromosome name is set to {\it chr1} by default, but it
+can be changed to any other value.  Items such as score, triplex
+type, P-value, loop start position, loop end position and number of indels
+can be added as optional attributes. In the next step the resulting 
+{\it GRanges} object is exported as a GFF3 file. 
+
+<<>>=
+library(rtracklayer)
+export(gr,"test.gff", version="3")
+@
+
+Please note, that it is necessary to load the {\it rtracklayer} library before
+running the {\it export} command. The contents of the resulting GFF3 file are:
+
+<<echo=FALSE>>=
+text <- readLines("test.gff",n=10)
+cat(strwrap(text, width=80, exdent=3),sep="\n")
+@
+
+Another possibility of utilizing the results of detection is to transform the 
+{\it TriplexView} object into a {\it DNAStringSet} object, which represents 
+another commonly used class of the {\it Biostrings} package. Triplexes stored 
+inside {\it DNAStringSet} can be exported into a FASTA file, for example.
+
+\subsection*{Example 8: DNAStringSet conversion}
+
+In this example, the output of the {\it triplex.search} function will be stored
+into a {\it DNAStringSet} object and further exported as a FASTA file. At
+first, let's do the conversion using the following command:
+
+<<>>=
+dss <- as(t, "DNAStringSet")
+dss
+@
+
+\noindent In the next step, the {\it DNAStringSet} object is exported as a FASTA file.
+
+<<>>=
+writeXStringSet(dss, file="test.fa", format="fasta")
+@
+
+\noindent The contents of the resulting FASTA file are:
+
+<<echo=FALSE>>=
+text <- readLines("test.fa",n=10)
+cat(text,sep="\n")
+@
+
+Please, note that all attributes of detection such as start position, end
+position, score value, P-value, number of indels, triplex type and strand
+are stored as a {\it name} parameter (inside the {\it DNAStringSet}), and thus,
+they are also shown in the description line of the FASTA format (the line 
+with the initial '>' symbol). 
+
+
+\newpage
+
+\section{A real world example}
+\label{sec:real}
+
+In the following example, we load a real genomic sequence from one of the
+BSGenome packages, identify potential triplexes with length over 8 triplets
+of nucleotides and less than 15\% mismatches (score >17 with the currently
+used scoring matrices), create three different visualizations of the best
+triplexes. We export the identified positions into a genome annotation track
+(via a GFF3 file) and FASTA file. Finally, we plot some statistics about the
+potential triplex distribution and nucleotide composition.
+
+\begin{enumerate}
+
+\item Load necessary libraries and genomes.
+
+<<>>=
+library(triplex) 
+library(BSgenome.Celegans.UCSC.ce10) 
+@
+\item Search for potential triplex positions and display the results. Please
+note that the sequence is limited to the first 100k bases for time reasons.
+
+<<>>=
+t <- triplex.search(Celegans[["chrX"]][1:100000],min_score=17,min_len=8)
+t
+@
+
+\item Sort the results by score and display 2D a 3D diagram of the
+best-scored triplex.
+
+<<>>=
+ts <- t[order(score(t),decreasing=TRUE)]
+ts
+@
+
+\newpage
+
+\setkeys{Gin}{width=.7\linewidth}
+\begin{figure}[h]
+\centering
+<<fig=TRUE>>=
+triplex.diagram(ts[1])
+@
+   \caption{2D diagram of detected triplex}
+   \label{fig:triplex2d}
+\end{figure}
+
+\newpage
+
+<<eval=FALSE>>=
+triplex.3D(ts[1])
+@
+
+<<echo=FALSE>>=
+triplex.alignment(ts[1])
+@
+
+\begin{figure}[h!]
+\centering
+   \includegraphics[width=.6\linewidth]{fig/triplex3d2}
+   \caption{3D scheme of detected triplex}
+   \label{fig:triplex3d}
+\end{figure}
+
+\newpage
+
+\item Export all triplexes into a GFF3 format file.
+
+<<>>=
+library(rtracklayer)
+export(as(t, "GRanges"),"test.gff", version="3")
+@
+
+The contents of the GFF3 file are as follows (the first 10 records only):
+
+<<echo=FALSE>>=
+text <- readLines("test.gff",n=10)
+cat(strwrap(text, width=80, exdent=3),sep="\n")
+@
+
+\item Export all triplexes into a FASTA format file.
+
+<<>>=
+writeXStringSet(as(t, "DNAStringSet"), file="test.fa", format="fasta")
+@
+
+The contents of the FASTA file are as follows (the first 10 records only):
+
+<<echo=FALSE>>=
+text <- readLines("test.fa",n=20)
+cat(text,sep="\n")
+@
+
+\item Show histogram for score distribution of detected triplexes.
+
+<<fig=TRUE>>=
+hist(score(t), breaks=20)
+@
+
+\item Show triplex distribution along the chromosome or other analysed sequence.
+
+<<fig=TRUE>>=
+plot(coverage(ts[0:length(t)]), type="s", col="grey75")
+@
+
+\newpage
+
+\item Show triplex distribution along the chromosome using GenomeGraphs
+
+<<fig=TRUE>>=
+library(GenomeGraphs)
+mart <- useMart("ensembl", dataset = "celegans_gene_ensembl")
+
+# Set up basic GenomeGraphs annotation tracks
+ideog <- makeIdeogram(chromosome = "X")
+genomeAxis <- makeGenomeAxis()
+genesplus <- makeGeneRegion(start = 0, end = 62000, strand = "+",
+   chromosome = "X", biomart = mart)
+genesminus <- makeGeneRegion(start = 0, end = 62000, strand = "-",
+   chromosome = "X", biomart = mart)
+
+# Set up triplex annotation tracks
+tall <- as(t,"GRanges")
+ta <- makeAnnotationTrack(
+  start = start(tall[which(end(tall)<62000)]),
+  end = end(tall[which(end(tall)<62000)]),
+  feature = "gene_model",
+  dp = DisplayPars(gene_model = "grey")
+)
+ta1 <- makeAnnotationTrack(
+  start = start(tall[which(end(tall)<62000 & score(tall)>20)]),
+  end = end(tall[which(end(tall)<62000 & score(tall)>20)]),
+  feature = "gene_model",
+  dp = DisplayPars(gene_model = "darkblue")
+)
+
+# Plot the entire thing
+gdPlot(list(fwd = genesplus, GENES = genomeAxis, rev = genesminus,
+   weak = ta, strong = ta1, chrX = ideog), minBase = 0,
+   maxBase = 62000, labelRot = 0)
+@
+
+\end{enumerate}
+
+\begin{thebibliography}{9}
+
+\bibitem{Lexa2011}
+   Lexa, M., Martínek, T., Burgetová, I., Kopeček, D., Brázdová, M.: \emph{A
+   dynamic programming algorithm for identification of triplex-forming
+   sequences}, In: Bioinformatics, Vol. 27, No. 18, 2011, Oxford, GB, p.
+   2510-2517, ISSN 1367-4803.
+
+\bibitem{Rajdl12}
+   Rajdl, K.  \emph{Funkce pro manipulaci a vizualizaci molekul\'{a}rn\'{i}ch
+   dat v prost\v{r}ed\'{i} R} [online].
+
+\end{thebibliography}
+
+
+\end{document}
+

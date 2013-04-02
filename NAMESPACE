@@ -1,0 +1,24 @@
+useDynLib("triplex")
+
+import(methods)
+import(grid)
+import(rgl)
+import(Biostrings)
+import(GenomicRanges)
+
+exportClasses(
+	TriplexViews
+)
+
+export(
+	triplex.search,
+	triplex.diagram,
+	triplex.3D,
+	triplex.alignment
+)
+
+exportMethods(
+	show, score, pvalue, ins,
+	type, lstart, lwidth, lend, strand,
+	as.character, toString, "["
+)
