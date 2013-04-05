@@ -6,7 +6,7 @@
 \usepackage[utf8]{inputenc}
 
 \title{Triplex: User Guide}
-\author{Matej Lexa, Tomáš Martínek, Jiří Hon}
+\author{Matej Lexa, Tom\`{a}\u{s} Mart\'{i}nek, Ji\u{r}\'{i} Hon}
 
 
 \begin{document}
@@ -504,7 +504,7 @@ gdPlot(list(fwd = genesplus, GENES = genomeAxis, rev = genesminus,
 \begin{thebibliography}{9}
 
 \bibitem{Lexa2011}
-   Lexa, M., Martínek, T., Burgetová, I., Kopeček, D., Brázdová, M.: \emph{A
+   Lexa, M., Mart\'{i}nek, T., Burgetov\'{a}, I., Kope\u{c}ek, D., Br\'{a}zdov\'{a}, M.: \emph{A
    dynamic programming algorithm for identification of triplex-forming
    sequences}, In: Bioinformatics, Vol. 27, No. 18, 2011, Oxford, GB, p.
    2510-2517, ISSN 1367-4803.
