@@ -47,10 +47,9 @@ sequences}, In: Bioinformatics, Vol. 27, No. 18, 2011, Oxford, GB, p.
 
 \examples{
 seq <- DNAString("GGAAAGCAATGCCAGGCAGGG")
-example(plot3d) ## work around rgl segfault on Snow Leopard
 t <- triplex.search(seq)
-\dontrun{
 triplex.diagram(t[1])
+\dontrun{
 triplex.3D(t[1])
 }
 }
