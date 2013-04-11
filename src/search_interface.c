@@ -65,7 +65,7 @@ void encode_bases(char *seq)
 	{
 		ch = CHAR2NUKL[(unsigned) seq[i]];
 		if (ch == INVALID_CHAR)
-			error("Unsupported symbol '%c' in input sequence.", (char) ch);
+			error("Unsupported symbol '%c' in input sequence.", seq[i]);
 		else
 			seq[i] = (char) ch;
 	}

@@ -3,6 +3,9 @@ CHANGES IN VERSION 1.0.0
 
 BUG FIXES
 
+    o Fixed handling of special IUPAC symbols (R, M, W, D, etc.). These are
+      now cut off as N and - symbols.
+
     o Fixed scoring matrices for matches and geometrical compatibility. They
       were combined with wrong types of triplexes. Among other things this
       caused the output of the program to be slightly innaccurate for certain
