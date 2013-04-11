@@ -63,8 +63,8 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 	/* Draw progress bar initially */
 		set_txt_progress_bar(&pb, 0);
 	
-	/** Split sequence into chunks divided by n, or - **/
-	char *chunk = strtok(dna.seq, "n-");
+	/** Split sequence into chunks divided by n, -, or special IUPAC symbols **/
+	char *chunk = strtok(dna.seq, "n-rmwdvhbsyk");
 	
 	while (chunk != NULL)
 	{ 
