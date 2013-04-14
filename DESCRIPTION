@@ -2,7 +2,7 @@ Package: triplex
 Type: Package
 Title: Search and visualize intramolecular triplex-forming sequences in
         DNA
-Version: 1.1.4
+Version: 1.1.5
 Date: 2013-02-14
 Authors@R: c(person("Jiri", "Hon", role = c("aut", "cre"),
                     email = "jiri.hon@gmail.com"),
@@ -22,6 +22,7 @@ Description: This package provides functions for identification and
   nucleotide triplets as possible. The package includes visualization showing 
   the exact base-pairing in 1D, 2D or 3D.
 License: BSD
+URL: http://www.fi.muni.cz/~lexa/triplex/
 biocViews: SequenceMatching, GeneRegulation
 Depends: R (>= 2.15.0), rgl, Biostrings (>= 2.26.0)
 Imports: methods, grid, rgl, Biostrings, GenomicRanges
