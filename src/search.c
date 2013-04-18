@@ -50,7 +50,7 @@ void print_status_array(t_diag* ptr, int size, int border);
  */
 void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 {
-	int i, j; 
+	int i, j, delta, piece_l, last_piece_l; 
 	
 	int pieces_overlap = params.max_loop + 2*params.max_len + 10;
 	
@@ -83,11 +83,13 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 		encode_bases(chunk);
 	
 		char *piece = NULL;
-		int pieces = ceil(chunk_l/(double)(params.max_chunk_size));
-		int delta = (params.max_chunk_size) - pieces_overlap;
-		
-		int piece_l = (params.max_chunk_size) + pieces_overlap;
-		int last_piece_l = chunk_l % piece_l;
+		int pieces = ceil(chunk_l / (double) params.max_chunk_size);
+// 		int delta = (params.max_chunk_size) - pieces_overlap;
+// 		int piece_l = (params.max_chunk_size) + pieces_overlap;
+// 		int last_piece_l = chunk_l % piece_l;
+		delta = params.max_chunk_size;
+		piece_l = params.max_chunk_size + pieces_overlap;
+		last_piece_l = chunk_l - (pieces-1)*params.max_chunk_size;
 		
 		/* Diag structure array alocation */
 		t_diag *diag = Calloc(2*piece_l, t_diag);

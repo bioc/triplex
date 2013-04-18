@@ -14,7 +14,7 @@
 #include "search_interface.h"
 #include "libtriplex.h"
 
-#define MAX_CHUNK_SIZE  5*1024*1024
+#define MAX_CHUNK_SIZE (5*1024*1024)
 
 
 extern double LAMBDA[NUM_TRI_TYPES];
