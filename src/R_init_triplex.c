@@ -13,6 +13,7 @@
 
 #include "search_interface.h"
 #include "align_interface.h"
+#include "libtriplex.h"
 
 #define CALLMETHOD_DEF(fun, numArgs) {#fun, (DL_FUNC) &fun, numArgs}
 

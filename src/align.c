@@ -2,7 +2,7 @@
  * Triplex package
  * Align algorithm
  *
- * @author  Matej Lexa, Tomas Martinek, Kamil Rajdl
+ * @author  Matej Lexa, Tomas Martinek, Kamil Rajdl, Jiri Hon
  * @date    2012/10/31
  * @file    align.c
  * @package triplex
@@ -21,13 +21,9 @@
 #include "align_interface.h"
 
 /* Status variable flags */
-#define STAT_NONE         0
-#define STAT_QUALITY      1
-#define STAT_MINLEN       2
-#define STAT_EXPORT       4
+#define STAT_NONE 0
 
 
-/** Function prototypes **/
 void search_align(char *piece, int piece_l, t_diag *diag, t_params *params, t_penalization *pen, t_diag** dp_matrix);
 
 t_diag** alloc_matrix(int size);
@@ -42,31 +38,22 @@ char rule(int r);
 
 /**
  * Align triplex
- * @param seq    Triplex sequence
+ * @param dna    Triplex sequence
  * @param params Algorithm options
  * @param pen    Custom penalizations
  */
-void main_align(char *seq, t_params params, t_penalization pen)
+void main_align(seq_t dna, t_params params, t_penalization pen)
 {      
-	int i, seq_l, verbose_flag = 0;
-	
-	seq_l = strlen(seq);
+	int i, verbose_flag = 0;
 	
 	/* Translation from a, c, g, t to 0, 1, 2, 3 */     
-	char tmp = 0;
-	for(i = 0; i < seq_l; i++) {
-		tmp = char2nukl(seq[i]);            
-		if(tmp == -1) {
-			error("'%c' is not allowed symbol in input data.\n", seq[i]);
-		}      
-		seq[i] = tmp;
-	}
+	encode_bases(dna);
 	
 	/* Diag structure array alocation */
-	t_diag  *diag = Calloc(2*seq_l, t_diag);
+	t_diag *diag = Calloc(2*dna.len, t_diag);
 	
 	/* Diag structure initialization */
-	for(i = 0; i < 2*seq_l; i++)
+	for(i = 0; i < 2*dna.len; i++)
 	{
 		diag[i].score = 0;
 		diag[i].max_score = 0;
@@ -83,18 +70,18 @@ void main_align(char *seq, t_params params, t_penalization pen)
 		diag[i].dp_rule = DP_MISMATCH;
 	}  
 
-	t_diag** mat = alloc_matrix(seq_l);
+	t_diag** mat = alloc_matrix(dna.len);
 	
-	init_matrix(mat, seq_l);
+	init_matrix(mat, dna.len);
 	
-	search_align(seq, seq_l, diag, &params, &pen, mat);
+	search_align(dna.seq, dna.len, diag, &params, &pen, mat);
 	
 	if (verbose_flag) {
-		print_matrix(mat, seq, seq_l, 0);
+		print_matrix(mat, dna.seq, dna.len, 0);
 	}
-	print_triplex(mat, seq, seq_l);
+	print_triplex(mat, dna.seq, dna.len);
 		
-	free_matrix(mat, seq_l);
+	free_matrix(mat, dna.len);
 	Free(diag);
 }
 
@@ -120,9 +107,9 @@ void print_triplex(t_diag** mat, char* seq, int seq_l)
 	int row = seq_l-1;
 	int col = row;
 	
-	while(mat[row][col].dp_rule != DP_MAIN_ADIAG && mat[row][col].dp_rule != DP_STOP) 
+	while (mat[row][col].dp_rule != DP_MAIN_ADIAG && mat[row][col].dp_rule != DP_STOP) 
 	{
-		switch(mat[row][col].dp_rule)
+		switch (mat[row][col].dp_rule)
 		{
 			case DP_MATCH:
 				body1[i1++] = nukl2char(seq[seq_l-1-row]);
@@ -322,7 +309,7 @@ void init_matrix(t_diag** mat, int l)
 				mat[r][c].indels = 0;
 				mat[r][c].max_indels = 0;
 				/** Two main antidiagonals are initialized differently **/
-				if(r == l-1-c || r == l-2-c) {
+				if (r == l-1-c || r == l-2-c) {
 					mat[r][c].dp_rule = DP_MAIN_ADIAG;
 				}        
 				else {
@@ -346,21 +333,20 @@ void search_align(char *piece, int piece_l, t_diag *diag, t_params *params, t_pe
 {
 	int i, x, d;
 	
-	for(x = params->min_loop+1; x < piece_l; x++)
+	for (x = params->min_loop+1; x < piece_l; x++)
 	{
 		d = x+1;
-		for(i = x; i < piece_l; i++, d+=2) {
-				
-			/** FASTA special nucleic acid codes will be replaced by most suitable nucleotide **/
-			if(piece[i] > 3 || piece[i-x] > 3) {        
-				handle_special(&piece[i], &piece[i-x], params->tri_type, diag[d], pen);        
-			}
-	
+		for (i = x; i < piece_l; i++, d+=2)
+		{
 			/* Max score and length calcualtion */
-			diag[d] = get_max_score(piece[i], piece[i-x], diag[d-1], diag[d], diag[d+1], d, x, params->tri_type, params->max_loop, pen);
+			get_max_score(
+				piece[i], piece[i-x],
+				&diag[d-1], &diag[d], &diag[d+1],
+				d, x, params->tri_type, params->max_loop, pen
+			);
 			
 			/** Resulting dp matrix **/      
-			dp_matrix[piece_l-1-(i-x)][i] = diag[d];     
+			dp_matrix[piece_l-1-(i-x)][i] = diag[d];
 		}
 	}
 }

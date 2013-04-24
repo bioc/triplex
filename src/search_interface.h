@@ -15,6 +15,8 @@
 #include <R.h>
 #include <Rinternals.h>
 
+#include "libtriplex.h"
+
 
 typedef enum
 {// Enumeration for decoding params from R
@@ -35,17 +37,9 @@ typedef enum
 	P_MIS_PEN
 } rparams_t;
 
-typedef struct
-{// Structure for decoded sequence
-	char *seq;
-	int len;
-} seq_t;
-
 
 SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP params, SEXP pbw);
 seq_t decode_DNAString(SEXP dnaobject);
-void init_CHAR2NUKL_table();
-void encode_bases(char *seq);
 void save_result(
 	int start, int end,    int score, double pvalue, int insdel,
 	int type,  int lstart, int lend, int strand

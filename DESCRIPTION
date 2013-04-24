@@ -1,7 +1,6 @@
 Package: triplex
 Type: Package
-Title: Search and visualize intramolecular triplex-forming sequences in
-        DNA
+Title: Search and visualize intramolecular triplex-forming sequences in DNA
 Version: 1.1.5
 Date: 2013-02-14
 Authors@R: c(person("Jiri", "Hon", role = c("aut", "cre"),

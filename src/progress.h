@@ -11,6 +11,8 @@
 #ifndef PROGRESS_H
 #define PROGRESS_H
 
+#define PB_SHOW_LIMIT 1000000
+
 typedef struct
 {// Progress bar object
 	double min;
@@ -18,8 +20,6 @@ typedef struct
 	int width;
 } prog_t;
 
-//prog_t txt_progress_bar(double min, double max, int width);
 void set_txt_progress_bar(prog_t *pb, double value);
-
 
 #endif // PROGRESS_H

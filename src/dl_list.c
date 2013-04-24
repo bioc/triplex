@@ -360,6 +360,9 @@ void dl_list_delete(t_dl_list *list, t_dl_node *node)
 void dl_list_init(t_dl_list *list, int max_len)
 {
         list->first = (t_dl_node *)malloc(sizeof(t_dl_node));
+		  if (list->first == NULL)
+			  error("Unable to allocate memory for result list.");
+		  
         (list->first)->data.start = -2*max_len-1;
         (list->first)->data.end = -1;
         (list->first)->data.score = 0;

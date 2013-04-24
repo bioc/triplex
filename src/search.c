@@ -2,7 +2,7 @@
  * Triplex search package
  * Search algorithm
  *
- * @author  Matej Lexa, Tomas Martinek
+ * @author  Matej Lexa, Tomas Martinek, Jiri Hon
  * @date    2012/10/15
  * @file    search.c
  * @package triplex
@@ -20,21 +20,32 @@
 #include "search_interface.h"
 #include "progress.h"
 
-
-double LAMBDA[NUM_TRI_TYPES] = {0.71, 0.71, 0.67, 0.67, 0.71, 0.71, 0.67, 0.67};
-double MI[NUM_TRI_TYPES]     = {5.88, 5.88, 6.05, 6.05, 5.88, 5.88, 6.05, 6.05};
-const int TAB_STRAND[NUM_TRI_TYPES] = {0, 0, 1, 1, 1, 1, 0, 0};
-
 /* Status variable flags */
 #define STAT_NONE     0
 #define STAT_QUALITY  1
 #define STAT_MINLEN   2
 #define STAT_EXPORT   4
-#define PB_SHOW_LIMIT 1000000
+
+
+double LAMBDA[NUM_TRI_TYPES] = {0.71, 0.71, 0.67, 0.67, 0.71, 0.71, 0.67, 0.67};
+double MI[NUM_TRI_TYPES]     = {5.88, 5.88, 6.05, 6.05, 5.88, 5.88, 6.05, 6.05};
+const int TAB_STRAND[NUM_TRI_TYPES] = {0, 0, 1, 1, 1, 1, 0, 0};
+
+typedef enum
+{// States for diagonal analysis in get_triplex_regions
+	S_AD_INIT,
+	S_AD_TRIPLEX,
+	S_AD_MIN_GAP,
+	S_AD_GAP
+} ad_states_t;
+
 
 /** Function prototypes **/
 void export_data(t_diag diag, int tri_type, int offset);
-void search(char *piece, int piece_l, int offset, t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb);
+void search(
+	char *piece, int piece_l, int offset, int n_antidiag, int max_bonus,
+	t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb
+);
 
 void print_score_array(t_diag* ptr, int size, int border);
 void print_rule_array(t_diag* ptr, int size, int border);
@@ -43,62 +54,64 @@ void print_status_array(t_diag* ptr, int size, int border);
 
 /**
  * Search triplex in DNA sequence
- * @param dna    DNA sequence
+ * @param dna encoed DNA sequence, @see encode_bases
+ * @param chunk Interval list of chunks divided by N or - symbols
  * @param params Algorithm options
- * @param pen    Custom penalizations
- * @param pbw    Progress bar width
+ * @param pen Custom penalizations
+ * @param pbw Progress bar width
  */
-void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
+void main_search(seq_t dna, intv_t *chunk, t_params *params, t_penalization *pen, int pbw)
 {
-	int i, j; 
+	int chunk_len, npieces, delta, piece_l, last_piece_l, min_score;
 	
-	int pieces_overlap = params.max_loop + 2*params.max_len + 10;
+	t_diag *diag = malloc(3*MAX_PIECE_SIZE * sizeof(t_diag));
+	//static t_diag diag[3*MAX_PIECE_SIZE]; // One MAX_PIECE_SIZE extra for piece_overlap
+	
+	// Maximal bonus per match
+	int max_bonus = get_max_bonus(params->tri_type, pen->iso_stay);
+	
+	min_score = get_min_score(params->p_val, params->tri_type);
+	if (min_score > params->min_score)
+	// Use minimal score deduced from P-value for better performance
+		params->min_score = min_score;
+	
+	/* NOTE: Maybe now could be all the filtration conditions considering
+	 * p_val removed from search() and get_max_score()
+	 * as this is now well represented by min_score */
+	
+	// Number of antidiagonals per triplex
+	int n_antidiag = get_n_antidiag(
+		max_bonus, pen->insertion, params->max_len, params->min_score,
+		params->max_loop
+	);
+	
+	int pieces_overlap = n_antidiag;
 	
 	/* Initialize progress bar structure */
 	prog_t pb = {0, dna.len, pbw};
-	
-	Rprintf("Searching for triplex type %d...\n", params.tri_type);
 	
 	if (pb.max >= PB_SHOW_LIMIT)
 	/* Draw progress bar initially */
 		set_txt_progress_bar(&pb, 0);
 	
-	/** Split sequence into chunks divided by n, -, or special IUPAC symbols **/
-	char *chunk = strtok(dna.seq, "n-rmwdvhbsyk");
-	
 	while (chunk != NULL)
-	{ 
-		int chunk_l = strlen(chunk);
+	{
+		chunk_len = chunk->end - chunk->start + 1;
+		npieces = ceil(chunk_len / (double) MAX_PIECE_SIZE);
+		delta = MAX_PIECE_SIZE;
 		
-		/** If chunk is too short, skip iteration and get next chunk **/
-// 		if (chunk_l <= 2*pieces_overlap && chunk_l != dna.len)
-// 		{
-// 			chunk = strtok(NULL, "nN-");
-// 			continue;
-// 		}
+		piece_l = MAX_PIECE_SIZE + pieces_overlap;
+		last_piece_l = chunk_len - ((npieces-1) * MAX_PIECE_SIZE);
 		
-		int chunk_offset = chunk - dna.seq;
-
-		/* Translation from a, c, g, t to 0, 1, 2, 3 */
-		encode_bases(chunk);
-	
-		char *piece = NULL;
-		int pieces = ceil(chunk_l/(double)(params.max_chunk_size));
-		int delta = (params.max_chunk_size) - pieces_overlap;
-		
-		int piece_l = (params.max_chunk_size) + pieces_overlap;
-		int last_piece_l = chunk_l % piece_l;
-		
-		/* Diag structure array alocation */
-		t_diag *diag = Calloc(2*piece_l, t_diag);
-		
-		for (j = 0, piece = chunk; j < pieces; j++, piece += delta)
-		{
-			if (j == pieces-1) piece_l = last_piece_l;
+		for (int j = 0, piece_offset = chunk->start;
+		     j < npieces;
+		     j++, piece_offset += delta)
+		{// Iterate through pieces
 			
-			int piece_offset = piece - chunk;
-			/* Diag structure initialization */
-			for(i = 0; i < 2*piece_l; i++)
+			if (j == npieces-1) piece_l = last_piece_l;
+			
+			// Diag structure initialization
+			for (int i = 0; i < 2*piece_l; i++)
 			{
 				diag[i].score = 0;
 				diag[i].max_score = 0;
@@ -107,21 +120,19 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 				diag[i].dtwist = 0;
 				diag[i].status = STAT_NONE;
 				diag[i].start.diag = i;
-				diag[i].start.antidiag = (((params.min_loop+i) % 2) == 0) ? params.min_loop+1 : params.min_loop+2;
+				diag[i].start.antidiag = (((params->min_loop+i) % 2) == 0) ? params->min_loop+1 : params->min_loop+2;
 				diag[i].max_score_pos.diag = diag[i].start.diag;
 				diag[i].max_score_pos.antidiag = diag[i].start.antidiag;
 				diag[i].indels = 0;
 				diag[i].max_indels = 0;
 				diag[i].dp_rule = DP_MISMATCH;
 			}  
-			
-			search(piece, piece_l, chunk_offset+piece_offset, diag, &params, &pen, &pb);
+			search(dna.seq + piece_offset, piece_l, piece_offset, n_antidiag, max_bonus, diag, params, pen, &pb);
 		}
-		
-		Free(diag);
-		
-		chunk = strtok(NULL, "n-");
+		chunk = chunk->next;
 	}
+	
+	free(diag);
 	
 	if (pb.max >= PB_SHOW_LIMIT)
 		Rprintf("\n");
@@ -130,11 +141,11 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 
 /**
  * P-function
- * @param score    Triplex score
+ * @param score Triplex score
  * @param tri_type Triplex type
  * @return P-function value
  */
-double p_function(int score, int tri_type)
+static inline double p_function(int score, int tri_type)
 {
 	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
 }
@@ -142,11 +153,11 @@ double p_function(int score, int tri_type)
 
 /**
  * E-value
- * @param score    Triplex score
+ * @param score Triplex score
  * @param tri_type Triplex type
  * @return E-value
  */
-double e_value(int score, int tri_type)
+static inline double e_value(int score, int tri_type)
 {
 	return p_function(score, tri_type);
 }
@@ -154,13 +165,31 @@ double e_value(int score, int tri_type)
 
 /**
  * P-value
- * @param score    Triplex score
+ * @param score Triplex score
  * @param tri_type Triplex type
  * @return P-value
  */
-double p_value(int score, int tri_type)
+static inline double p_value(int score, int tri_type)
 {
 	return 1-exp(-p_function(score, tri_type));
+}
+
+
+/**
+ * Deduce minimal score from P-value treshold
+ * NOTE P-value must be monotonic decreasing function with respect to score
+ * @param pvalue P-value treshold
+ * @param type Triplex type
+ * @return Minimal score
+ */
+int get_min_score(double pvalue, int type)
+{
+	int score = 1;
+	
+	while (p_value(score, type) > pvalue)
+		score++;
+	
+	return score;
 }
 
 
@@ -207,7 +236,8 @@ void print_score_array(t_diag* ptr, int size, int border)
 	int i;
 	for (i=0; i<border; i++) Rprintf(";");
 	
-	for (i=border; i<=size-border; i=i+2) { 
+	for (i=border; i<=size-border; i=i+2)
+	{ 
 		Rprintf("%d", ptr[i].score);
 		Rprintf(";;");
 	}
@@ -226,7 +256,8 @@ void print_rule_array(t_diag* ptr, int size, int border)
 	int i;
 	for (i = 0; i < border; i++) Rprintf(";");
 	
-	for (i = border; i <= size-border; i = i+2) { 
+	for (i = border; i <= size-border; i = i+2)
+	{ 
 		if (ptr[i].dp_rule == DP_MATCH) Rprintf("|");
 		if (ptr[i].dp_rule == DP_MISMATCH) Rprintf("x");
 		if (ptr[i].dp_rule == DP_LEFT) Rprintf("\\");
@@ -248,7 +279,8 @@ void print_status_array(t_diag* ptr, int size, int border)
 	int i;
 	for (i=0; i<border; i++) Rprintf(" ");
 	
-	for (i=border; i<=size-border; i++) { 
+	for (i=border; i<=size-border; i++)
+	{ 
 		if (ptr[i].status == STAT_NONE) Rprintf(" ");
 		if (ptr[i].status == STAT_EXPORT) Rprintf("*");
 		if (ptr[i].status == (STAT_MINLEN|STAT_QUALITY)) Rprintf("|");
@@ -259,117 +291,404 @@ void print_status_array(t_diag* ptr, int size, int border)
 
 
 /**
- * Search for triplexes in given piece
- * @param piece   Given sequence
- * @param piece_l Length of given sequence
- * @param offset  Offset from the real start of sequence
- * @param diag    t_diag array used to search for triplexes
- * @param params  Application parameters
- * @param pen     Penalization scores
- * @param pb      Progress bar
+ * Convert diagonal and antidiagonal coordinates
+ * into row index starting from bottom
+ * NOTE Make sure that d >= ad.
+ * @param ad Antidiagonal number
+ * @param d  Diagonal number
+ * @return Row index starting from bottom
  */
-void search(char *piece, int piece_l, int offset, t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb)
+static inline int d_to_start(int ad, int d)
 {
-	int i, x, d, restore = 0, length, exp_num = 0;
-	int x_start, x_limit;
-	double x_width, x_perc;
+/* Example: ad = 2, d = 5 -> result = 1
+
+     0   1   2   3   4   5
+   +---+---+---+---+---+---+
+5  |   |   |   |   |   |   |
+   +---+---+---+---+---+---+
+4  |   |   |   |   |   | 10|
+   +---+---+---+---+---+---+
+3  |   |   |   |   | 8 | 9 |
+   +---+---+---+---+---+---+
+2  |   |   |   | 6 | 7 |   |
+   +---+---+---+---+---+---+
+1  |===|===| 4 | 5 |===|===|
+   +---+---+---+---+---+---+
+0  |   | 2 | 3 |   |   |   |
+   +---+---+---+---+---+---+
+  O   1   2   3   4   5 
+  
+*/
+  return (d - ad) / 2;
+}
+
+
+/**
+ * Convert diagonal and antidiagonal coordinates
+ * into column index starting from left
+ * NOTE Make sure that d > ad.
+ * @param ad Antidiagonal number
+ * @param d  Diagonal number
+ * @return Column index starting from left
+ */
+static inline int d_to_end(int ad, int d)
+{
+/* Example: ad = 2, d = 8 -> result = 4
+
+     0   1   2   3   4   5
+   +---+---+---+---+---+---+
+5  |   |   |   |   | # |   |
+   +---+---+---+---+---+---+
+4  |   |   |   |   | # | 10|
+   +---+---+---+---+---+---+
+3  |   |   |   |   | 8 | 9 |
+   +---+---+---+---+---+---+
+2  |   |   |   | 6 | 7 |   |
+   +---+---+---+---+---+---+
+1  |   |   | 4 | 5 | # |   |
+   +---+---+---+---+---+---+
+0  |   | 2 | 3 |   | # |   |
+   +---+---+---+---+---+---+
+  O   1   2   3   4   5 
+  
+*/
+	return (d - ad - 1)/2 + ad;
+}
+
+
+/**
+ * Create triplex region interval
+ * @param start Start diagonal
+ * @param end End diagonal
+ * @param d_overlap Number of diagonals to overlap
+ * @param ad Antidiagonal index
+ * @param d_first First diagonal index
+ * @param d_last Last diagonal index
+ * @return Triplex region interval
+ */
+static inline intv_t *triplex_region(int start, int end, int d_overlap, int ad, int d_first, int d_last)
+{
+	start -= d_overlap;
+	if (start < d_first)
+		start = d_first;
 	
-	char *piece_orig = Calloc(piece_l, char);
+	end += d_overlap;
+	if (end > d_last)
+		end = d_last;
 	
-	// Starting diagonal depth
-	x_start = params->min_loop + 1;
-	// Diagonal depth limit
-	x_limit = 2*params->max_len + params->max_loop;
+	return new_intv(d_to_start(ad, start), d_to_end(ad, end));
+}
+
+
+/**
+ * Get intervals whic still need computation
+ * @param ad Current antidiagonal index
+ * @param n_adiag Number of antidiagonal
+ * @param adiag Antidiagonal  
+ * @param region Regions to analyze on diagonal
+ * @param treshold Minimal score for intervals that still need further computation 
+ * @return Intervals which still need computation
+ */
+intv_t *get_triplex_regions(
+	int ad, int n_adiag, t_diag *diag,
+	intv_t *region, int treshold)
+{
+	/* Illustration of diagonal and antidiagonal numbers
+	 * 
+	 * n_adiag = 6 (number of diagonals)
+	 * ad = 2 (current antidiagonal)
 	
-	if (piece_l < x_limit)
-		x_limit = piece_l;
+	     R   O   T   O   R   S
+	   +---+---+---+---+---+---+
+	S  |   |   |   |   |   |   |
+	   +---+---+---+---+---+---+
+	R  |   |   |   |   |   | 10|
+	   +---+---+---+---+---+---+
+	O  |   |   |   |   | 8 | 9 |
+	   +---+---+---+---+---+---+
+	T  |   |   |   | 6 | 7 |   |
+	   +---+---+---+---+---+---+
+	O  |   |   | 4 | 5 |   |   |
+	   +---+---+---+---+---+---+
+	R  |   | 2 | 3 |   |   |   |
+	   +---+---+---+---+---+---+
+	  O   1   2   3   4   5  <- antidiagonal numbers
 	
-	x_width = x_limit - x_start;
+	 * Diagonal numbers are presented in the table cells
+	 */
 	
-	memcpy(piece_orig, piece, piece_l);
+	/* How many diagonals should be added to both sides
+	 * of possible triplex interval */
+	int d_overlap = n_adiag - ad;
 	
-        /* x-characters (corresponds to antidiagonal number) */
-	for (x = x_start; x < x_limit; x++)
+	/* Minimal gap between two triplex forming regions */
+	int min_gap = 3*d_overlap;
+	
+	int d, gap_len, d_last, d_first, start, end;
+	ad_states_t state;
+	intv_t *tmp;
+	
+	// Create first empty interval as a list header
+	intv_t header = {0, 0, NULL};
+	intv_t *last = &header;
+	
+#ifndef NDEBUG
+	int triplex = 0;
+#endif
+	
+	while (region != NULL)
 	{
-		d = x+1;
+		d_first = ad + 2*region->start; // First diagonal
+		d_last = 2*(region->end + 1) - ad; // Last diagonal
 		
-		for(i = x; i < piece_l; i++, d+=2)
+		state = S_AD_INIT;
+		start = d_first; // Interval start diagonal
+		end = d_last; // Interval end diagonal
+		gap_len = 0;
+	
+		/* Finite-state automata, that looks for regions
+		 * with score higher or equal to treshold.
+		 * Such regions are extended by d_overlap on both sides if possible.
+		 * See triplex_region function for details. */
+		for (d = d_first; d <= d_last; d++)
 		{
-			/** FASTA special nucleic acid codes will be replaced by most suitable nucleotide **/
-			if(piece[i] > 3 || piece[i-x] > 3) {        
-			handle_special(&piece[i], &piece[i-x], params->tri_type, diag[d], pen);
-			restore = 1;
-			}
-			
-			/* Max score and length calcualtion */
-			diag[d] = get_max_score(piece[i], piece[i-x], diag[d-1], diag[d], diag[d+1], d, x, params->tri_type, params->max_loop, pen);
-			length = get_length(diag[d].start.antidiag, diag[d].max_score_pos.antidiag, diag[d].start.diag, diag[d].max_score_pos.diag);
-			diag[d].status = (length >= params->min_len) ? diag[d].status|STAT_MINLEN : diag[d].status&(~STAT_MINLEN);
-			
-			/* Actual score satisfies the required quality */
-			if(diag[d].score >= params->min_score)
+#ifndef NDEBUG
+			if (diag[d].score >= treshold)
+				triplex++;
+#endif
+			switch (state)
 			{
-				diag[d].status |= STAT_QUALITY;
-				/* If triplex can not continue, then export */
-				if ((diag[d].status & STAT_MINLEN) && ((d == (x+1)) || (d == (2*piece_l-x-1))))
-				{
-					exp_num++;
-					diag[d].status = STAT_EXPORT;
-					if(p_value(diag[d].max_score, params->tri_type) < params->p_val)
+				case S_AD_INIT:
+				// Initial decision
+					if (diag[d].score >= treshold)
 					{
-						export_data(diag[d], params->tri_type, offset);                               
-					}          
-				}
-			}
-			/* Actual score does not satisfy the required quality */
-			else
-			{
-			/* If quality requirement was satisfied in previous step, then export */
-				if(
-				(!(diag[d-1].status & STAT_QUALITY)) && (!(diag[d+1].status & STAT_QUALITY)) &&
-				((diag[d].status & STAT_QUALITY)) && ((diag[d].status & STAT_MINLEN)))
-				{
-					diag[d].status = STAT_EXPORT;
-					exp_num++;          
-					if(p_value(diag[d].max_score, params->tri_type) < params->p_val)
-					{
-						export_data(diag[d], params->tri_type, offset);
+						start = d;
+						state = S_AD_TRIPLEX;
 					}
-					diag[d].max_score = 0;
-				}
-				else {
-					diag[d].status = STAT_NONE;
-				}
+					break;
+				case S_AD_TRIPLEX:
+				// Triplex forming region
+					if (diag[d].score < treshold)
+					{
+						end = d - 1;
+						gap_len = 1;
+						state = S_AD_MIN_GAP;
+					}
+					break;
+				case S_AD_MIN_GAP:
+				// Check if the gap is at least min_gap long
+					if (diag[d].score < treshold)
+					{
+						gap_len++;
+						
+						if (gap_len == min_gap)
+							state = S_AD_GAP;
+					}
+					else
+						state = S_AD_TRIPLEX;
+					break;
+				case S_AD_GAP:
+				// The gap is long enough
+					if (diag[d].score >= treshold)
+					{// Export triplex interval
+						last->next = triplex_region(start, end, d_overlap, ad, d_first, d_last);
+						last = last->next;
+						start = d;
+						state = S_AD_TRIPLEX;
+					}
+					break;
 			}
-			
-		} 
+		}
+		if (state == S_AD_TRIPLEX ||
+			state == S_AD_MIN_GAP ||
+			state == S_AD_GAP)
+		{// Export last triplex interval
+			last->next = triplex_region(start, end, d_overlap, ad, d_first, d_last);
+			last = last->next;
+		}
+		tmp = region;
+		region = region->next;
+		free(tmp);
+	}
+	
+#ifndef NDEBUG
+	printf("Possible triplexes: %d\n", triplex);
+	
+	/* Debug print */
+	intv_t *intv = header.next;
+	
+	int width = 0;
+	int count = 0;
+	while (intv != NULL)
+	{
+		width += intv->end - intv->start + 1;
+		count++;
+		intv = intv->next;
+	}
+	printf("Adiag: %d, treshold: %d, number of intervals: %d, average interval width: %g\n",
+	       ad, treshold, count, (double) width/count);
+#endif
+	return header.next;
+}
+
+
+/**
+ * Search for triplexes in given piece
+ * @param piece Given sequence
+ * @param piece_l Length of given sequence
+ * @param offset Offset from the real start of sequence
+ * @param n_antidiag Number of antidiagonals to compute
+ * @param max_bonus Maximal bonus per match
+ * @param diag t_diag array used to search for triplexes
+ * @param params Application parameters
+ * @param pen Penalization scores
+ * @param pb Progress bar
+ */
+void search(
+	char *piece, int piece_l, int offset, int n_antidiag, int max_bonus,
+	t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb)
+{
+	int i, ad, d, length, treshold, d_count, d_under_tres, d_in_regions, ad_start;
+	double ad_width, ad_perc, tres_ratio, real_ratio;
+	
+	// Starting antidiagonal
+	ad_start = params->min_loop + 1;
+	
+	if (piece_l < n_antidiag)
+		n_antidiag = piece_l;
+	
+	ad_width = n_antidiag - ad_start;
+	
+	intv_t *triplex_regions = new_intv(0, piece_l - 1);
+	intv_t *tr = new_intv(0, piece_l - 1);
+	intv_t *intv = NULL;
+	
+// 	char fname[128];
+// 	snprintf(fname, 128, "experiments/tres_ratio_on_min_score/min_score_%d_%d.data", params->min_score, params->tri_type);
+// 	
+// 	FILE *fd = fopen(fname, "w");
+	
+	/* ad = antidiagonal number */
+	for (ad = ad_start; ad < n_antidiag; ad++)
+	{
+		intv = triplex_regions;
+		d_count = 0;
+		d_under_tres = 0;
 		
-		if (pb->max >= PB_SHOW_LIMIT)
-		{// Redraw progress bar
-			x_perc = (x+1 - x_start) / x_width;
-			set_txt_progress_bar(pb, offset + x_perc * piece_l);
+		/* Minimal score to still have a chance to satisfy min_score param
+		 * at the maximal antidiagonal. */
+		treshold = params->min_score - (n_antidiag - ad + 1)/2 * max_bonus;
+		
+		while (intv != NULL)
+		{
+			for (i = ad + intv->start, d = ad + 2*intv->start + 1;
+			     i <= intv->end;
+			     i++, d += 2)
+			{
+				/* Max score and length calcualtion */
+				get_max_score(
+					piece[i], piece[i-ad],
+					&diag[d-1], &diag[d], &diag[d+1],
+					d, ad, params->tri_type, params->max_loop, pen
+				);
+				length = get_length(
+					diag[d].start.antidiag,
+					diag[d].max_score_pos.antidiag,
+					diag[d].max_indels
+				);
+				diag[d].status = (length >= params->min_len) ? diag[d].status|STAT_MINLEN : diag[d].status&(~STAT_MINLEN);
+				
+				/* Actual score satisfies the required quality */
+				if (diag[d].score >= params->min_score)
+				{
+					diag[d].status |= STAT_QUALITY;
+					/* If triplex can not continue, then export */
+					if ((diag[d].status & STAT_MINLEN) && ((d == (ad+1)) || (d == (2*piece_l-ad-1))))
+					{
+						diag[d].status = STAT_EXPORT;
+						if (p_value(diag[d].max_score, params->tri_type) < params->p_val)
+						{
+							export_data(diag[d], params->tri_type, offset);                               
+						}          
+					}
+				}
+				/* Actual score does not satisfy the required quality */
+				else
+				{
+				/* If quality requirement was satisfied in previous step, then export */
+					if(
+						(!(diag[d-1].status & STAT_QUALITY)) && (!(diag[d+1].status & STAT_QUALITY)) &&
+						((diag[d].status & STAT_QUALITY)) && ((diag[d].status & STAT_MINLEN)))
+					{
+						diag[d].status = STAT_EXPORT;
+						if (p_value(diag[d].max_score, params->tri_type) < params->p_val)
+						{
+							export_data(diag[d], params->tri_type, offset);
+						}
+						diag[d].max_score = 0;
+					}
+					else {
+						diag[d].status = STAT_NONE;
+					}
+				}
+				d_count++;
+				
+				if (diag[d].score < treshold)
+					d_under_tres++;
+			}
+			intv = intv->next;
 		}
 		
-		//print_rule_array(diag, 2*chunk_l, x+1);
-		//print_score_array(diag, 2*chunk_l, x+1);
+		tres_ratio = (double) d_under_tres / d_count;
 		
-		/** Restore original sequence if any special FASTA nucleic acid codes were replaced **/
-		if(restore) {
-			restore = 0;
-			memcpy(piece, piece_orig, piece_l);
-		}   
-	}  
-	
-	/************************* Post-Processing **********************************/  
-	/* Print nonexported triplexes */
-	int nexp_num = 0;
-	for(i = 1; i < (2*piece_l); i++) {
-		if ((diag[i].status & STAT_QUALITY) && (diag[i].status & STAT_MINLEN)) {      
-			if(p_value(diag[i].max_score, params->tri_type) < params->p_val) {
-			export_data(diag[i], params->tri_type, offset);        
+		if (tres_ratio >= TRES_RATIO)
+		{
+			triplex_regions = get_triplex_regions(ad, n_antidiag, diag, triplex_regions, treshold);
+			
+// 			intv = tr;
+// 			d_in_regions = 0;
+// 			
+// 			while (intv != NULL)
+// 			{
+// 				for (i = ad + intv->start; i <= intv->end; i++)
+// 					d_in_regions++;
+// 				
+// 				intv = intv->next;
+// 			}
+// 			real_ratio = (double) (d_count - d_in_regions) / d_count;
+// 			
+// 			fprintf(fd, "%d %g %g\n", ad, tres_ratio, real_ratio);
+			
+#ifndef NDEBUG
+			int triplex = 0;
+			for (d = ad; d <= 2*piece_l - ad; d++)
+			{
+				if (diag[d].score >= treshold)
+					triplex++;
 			}
-			nexp_num++;
+			printf("Real possible triplexes: %d\n", triplex);
+#endif
 		}
 	}
-	Free(piece_orig);
+	// Free last version of triplex regions
+	free_intv(triplex_regions);
+	
+		
+	if (pb->max >= PB_SHOW_LIMIT)
+	{// Redraw progress bar
+// 		ad_perc = (ad+1 - ad_start) / ad_width;
+// 		set_txt_progress_bar(pb, offset + ad_perc * piece_l);
+		set_txt_progress_bar(pb, offset + piece_l);
+	}
+// 	fclose(fd);
+	
+	/* Print nonexported triplexes */
+	for (i = 1; i < (2*piece_l); i++)
+	{
+		if ((diag[i].status & STAT_QUALITY) && (diag[i].status & STAT_MINLEN))
+		{      
+			if (p_value(diag[i].max_score, params->tri_type) < params->p_val)
+				export_data(diag[i], params->tri_type, offset);
+		}
+	}
 }

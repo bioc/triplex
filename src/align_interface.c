@@ -50,8 +50,7 @@ SEXP triplex_align(SEXP seq, SEXP type, SEXP rparams)
 		.min_len = p[P_MIN_LEN],
 		.max_len = p[P_MAX_LEN],
 		.min_loop = p[P_MIN_LOOP],
-		.max_loop = p[P_MAX_LOOP],
-		.max_chunk_size = MAX_CHUNK_SIZE
+		.max_loop = p[P_MAX_LOOP]
 	};
 	t_penalization pen =
 	{// Set penalizations 
@@ -74,7 +73,7 @@ SEXP triplex_align(SEXP seq, SEXP type, SEXP rparams)
 	tx_align.seq = Calloc(tx_align.len, char);
 	tx_align_pos = 0;
 	
-	main_align(dna.seq, params, pen);
+	main_align(dna, params, pen);
 	
 	SEXP res;
 	PROTECT(res = allocVector(STRSXP, 1));

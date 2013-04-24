@@ -11,7 +11,8 @@
 #ifndef DL_LIST_H
 #define DL_LIST_H
 
-typedef struct DL_Data {
+typedef struct DL_Data
+{
 	int type;
 	int start;
 	int end;
@@ -23,18 +24,20 @@ typedef struct DL_Data {
 	int strand;
 } t_dl_data;
 
-typedef struct DL_Node {
-        struct DL_Data data;
-        struct DL_Node *next;
-        struct DL_Node *prev;
-}t_dl_node;
+typedef struct DL_Node
+{
+	struct DL_Data data;
+	struct DL_Node *next;
+	struct DL_Node *prev;
+} t_dl_node;
 
-typedef struct {
-        int    size;
-        int    max_len;
-        struct DL_Node *first;
-        struct DL_Node *last;
-}t_dl_list;
+typedef struct
+{
+	int    size;
+	int    max_len;
+	struct DL_Node *first;
+	struct DL_Node *last;
+} t_dl_list;
 
 void dl_list_init(t_dl_list *list, int max_len);
 void dl_list_delete(t_dl_list *list, t_dl_node *node);

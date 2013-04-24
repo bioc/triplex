@@ -2,7 +2,7 @@
  * Triplex package
  * Search and align algorithm common functions
  *
- * @author  Matej Lexa, Tomas Martinek
+ * @author  Matej Lexa, Tomas Martinek, Jiri Hon
  * @date    2012/10/15
  * @file    libtriplex.c
  * @package triplex
@@ -16,26 +16,98 @@
 #include <ctype.h>
 #include "libtriplex.h"
 
-/* special nucleic acid codes */
-unsigned char special[][4] = {
-  {A, '|'},           // A
-  {C, '|'},           // C
-  {G, '|'},           // G
-  {T, '|'},           // T
-  {A, G, '|'},        // Purine - G/A
-  {C, T, '|'},        // Pyrimidine - C/T
-  {G, T, '|'},        // Ketone - G/T
-  {A, C, '|'},        // Amino group - A/C
-  {C, G, '|'},        // Strong interaction - C/G
-  {A, T, '|'},        // Weak interaction - A/T
-  {C, G, T, '|'},     // Not A
-  {A, G, T, '|'},     // Not C
-  {A, C, T, '|'},     // Not G
-  {A, C, G, '|'},     // Not T
+#define ASCII_LOW 128
+#define NBASES 4
+
+/* Translation table from ascii symbols to
+ * internal representation of DNA bases */
+char CHAR2NUKL[ASCII_LOW];
+
+/* Translation table from internal representation
+ * of DNA bases to corresponding ASCII symbols */
+const char NUKL2CHAR[NBASES] =
+{
+	[A] = 'a', [C] = 'c',
+	[G] = 'g', [T] = 't'
 };
 
-/*
-  Triplex detection scheme (pseudo-palindromatic structure)
+/* Table indicating which symbols should be cut off
+ * from input DNA sequence, especially IUPAC symbols */
+const int CHUNKCHAR[ASCII_LOW] =
+{
+	['n'] = 1, ['-'] = 1, ['r'] = 1, ['m'] = 1,
+	['w'] = 1, ['d'] = 1, ['v'] = 1, ['h'] = 1,
+	['b'] = 1, ['s'] = 1, ['y'] = 1, ['k'] = 1
+};
+
+
+/* Possible triplex types
+---------------------------------------------------
+
+==== Type 0 ====                   ==== Type 1 ====
+5' ---------LOOP                   LOOP--------- 3'
+    | | | |           Parallel          | | | |
+3' --------         first strand        -------- 5'
+    : : : :                             : : : :
+3' ---------LOOP                   LOOP--------- 5'
+
+==== Type 2 ====                   ==== Type 3 ====
+5' ---------LOOP                   LOOP--------- 3'
+    : : : :          Parallel           : : : :
+5' --------        second strand        -------- 3'
+    | | | |                             | | | |
+3' ---------LOOP                   LOOP--------- 5'
+
+==== Type 4 ====                   ==== Type 5 ====
+5' ---------                            -------- 3'
+    | | | |         Antiarallel         | | | |
+3' ---------LOOP   second strand   LOOP--------- 5'
+    : : : :                             : : : :
+5' ---------LOOP                   LOOP--------- 3'
+
+==== Type 6 ====                   ==== Type 7 ====
+3' ---------LOOP                   LOOP--------- 5'
+    : : : :         Antiparallel        : : : :
+5' ---------LOOP    first strand   LOOP--------- 3'
+    | | | |                             | | | |
+3' ---------                            -------- 5'
+
+---------------------------------------------------
+*/
+
+
+/* Dynamic algorithm principle
+ * is based on palindrome search
+
+Example
+Scoring: +2 match, -7 mismatch, -9 ins
+Max loop: 1
+
+     R   O   T   O   R   S
+   +---+---+---+---+---+---+
+S  |   |   |   |   | O | O |
+   +---+---+---+---+---+---+
+R  |   |   |   | O | 0 | 0 |
+   +---+---+---+---+---+---+
+O  |   |   | O | 0 | 0 |-7 |
+   +---+---+---+---+---+---+
+T  |   | 0 | 0 | 0 |-7 |-7 |
+   +---+---+---+---+---+---+
+O  | 0 | 0 | 0 | 2 |-7 |-14|
+   +---+---+---+---+---+---+
+R  | 0 | 0 |-7 |-7 | 4 |-5 |
+   +---+---+---+---+---+---+
+  O   1   2   3   4   5  <- antidiagonal numbers
+
+Result palindrome:
+
+R---O--
+|   |  T
+R---O--
+*/
+
+/* Triplex detection scheme
+ * (pseudo-palindromatic structure)
 
                       --------------
                     /               \
@@ -45,144 +117,151 @@ unsigned char special[][4] = {
 Order:           second           first
 DP Matrix:        row             column
 Score Matrix:    column            row
-
 */
 
-/*
-Tritype
- 0: parallel triplex on first strand
- 1: parallel triplex on first strand
- 2: parallel triplex on second strand
- 3: parallel triplex on second strand
- 4: antiparallel triplex on second strand
- 5: antiparallel triplex on second strand
- 6: antiparallel triplex on first strand
- 7: antiparallel triplex on first strand
-*/
 
-/* Lookup tables */
-const int tab_score[NUM_TRI_TYPES][4][4] = {
+// Strong triplet score
+#define TS 2
+// Alternative (weak) triplet score
+#define TW 1
+// Triplet missmatch indication
+#define TM -9
+
+const int tab_score[NUM_TRI_TYPES][NBASES][NBASES] =
+{// Tabulated triplet score
  /*
   * Parallel
   */
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { {-9, -9, -9, -9},
- /*   C   */    {-9,  2, -9, -9},
- /*   G   */    { 2,  1, -9, -9},
- /*   T   */    {-9,  1,  1,  2} },
+ /*   A   */  { {TM, TM, TM, TM},
+ /*   C   */    {TM, TS, TM, TM},
+ /*   G   */    {TS, TW, TM, TM},
+ /*   T   */    {TM, TW, TW, TS} },
 
  /* [W][H] */ /*  A   C   G   T */
- /*   A   */  { {-9, -9,  2, -9},
- /*   C   */    {-9,  2,  1,  1},
- /*   G   */    {-9, -9, -9,  1},
- /*   T   */    {-9, -9, -9,  2} },
+ /*   A   */  { {TM, TM, TS, TM},
+ /*   C   */    {TM, TS, TW, TW},
+ /*   G   */    {TM, TM, TM, TW},
+ /*   T   */    {TM, TM, TM, TS} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 2,  1,  1, -9},
- /*   C   */    {-9, -9,  1,  2},
- /*   G   */    {-9, -9,  2, -9},
- /*   T   */    {-9, -9, -9, -9} },
+ /*   A   */  { {TS, TW, TW, TM},
+ /*   C   */    {TM, TM, TW, TS},
+ /*   G   */    {TM, TM, TS, TM},
+ /*   T   */    {TM, TM, TM, TM} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 2, -9, -9, -9},
- /*   C   */    { 1, -9, -9, -9},
- /*   G   */    { 1,  1,  2, -9},
- /*   T   */    {-9,  2, -9, -9} },
+ /*   A   */  { {TS, TM, TM, TM},
+ /*   C   */    {TW, TM, TM, TM},
+ /*   G   */    {TW, TW, TS, TM},
+ /*   T   */    {TM, TS, TM, TM} },
 
  /*
   * Antiparallel
   */
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { {-9, -9,  1,  2},
- /*   C   */    {-9,  2, -9, -9},
- /*   G   */    {-9, -9, -9,  1},
- /*   T   */    {-9,  1, -9,  2} },
+ /*   A   */  { {TM, TM, TW, TS},
+ /*   C   */    {TM, TS, TM, TM},
+ /*   G   */    {TM, TM, TM, TW},
+ /*   T   */    {TM, TW, TM, TS} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { {-9, -9, -9, -9},
- /*   C   */    {-9,  2, -9,  1},
- /*   G   */    { 1, -9, -9, -9},
- /*   T   */    { 2, -9,  1,  2} },
+ /*   A   */  { {TM, TM, TM, TM},
+ /*   C   */    {TM, TS, TM, TW},
+ /*   G   */    {TW, TM, TM, TM},
+ /*   T   */    {TS, TM, TW, TS} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 2, -9,  1, -9},
- /*   C   */    { 1, -9, -9, -9},
- /*   G   */    {-9, -9,  2, -9},
- /*   T   */    { 2,  1, -9, -9} },
+ /*   A   */  { {TS, TM, TW, TM},
+ /*   C   */    {TW, TM, TM, TM},
+ /*   G   */    {TM, TM, TS, TM},
+ /*   T   */    {TS, TW, TM, TM} },
 
  /* [W][H] */ /*  A   C   G   T */
- /*   A   */  { { 2,  1, -9,  2},
- /*   C   */    {-9, -9, -9,  1},
- /*   G   */    { 1, -9,  2, -9},
- /*   T   */    {-9, -9, -9, -9} },
+ /*   A   */  { {TS, TW, TM, TS},
+ /*   C   */    {TM, TM, TM, TW},
+ /*   G   */    {TW, TM, TS, TM},
+ /*   T   */    {TM, TM, TM, TM} },
 
 };
 
-const int tab_bound[NUM_TRI_TYPES][4][4] = {
+
+/* Isomorphic groups named according to triplet table
+ * published in Lexa et al. 2011 */
+#define IN 0
+// Parallel triplets
+#define IA 1
+#define IB 2
+// Antiparallel triplets
+#define IC 3
+#define ID 4
+#define IE 5
+
+const int tab_bound[NUM_TRI_TYPES][NBASES][NBASES] =
+{// Tabulated isomorphic groups
  /*
   * Parallel
   */
 
- /* [H][W] */ /*  A   C   G   A */
- /*   A   */  { { 0,  0,  0,  0},
- /*   C   */    { 0,  1,  0,  0},
- /*   G   */    { 2,  2,  0,  0},
- /*   T   */    { 0,  1,  2,  1} },
+ /* [H][W] */ /*  A   C   G   T */
+ /*   A   */  { {IN, IN, IN, IN},
+ /*   C   */    {IN, IA, IN, IN},
+ /*   G   */    {IB, IB, IN, IN},
+ /*   T   */    {IN, IA, IB, IA} },
 
  /* [W][H] */ /*  A   C   G   T */
- /*   A   */  { { 0,  0,  2,  0},
- /*   C   */    { 0,  1,  2,  1},
- /*   G   */    { 0,  0,  0,  2},
- /*   T   */    { 0,  0,  0,  1} },
+ /*   A   */  { {IN, IN, IB, IN},
+ /*   C   */    {IN, IA, IB, IA},
+ /*   G   */    {IN, IN, IN, IB},
+ /*   T   */    {IN, IN, IN, IA} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 1,  2,  1,  0},
- /*   C   */    { 0,  0,  2,  2},
- /*   G   */    { 0,  0,  1,  0},
- /*   T   */    { 0,  0,  0,  0} },
+ /*   A   */  { {IA, IB, IA, IN},
+ /*   C   */    {IN, IN, IB, IB},
+ /*   G   */    {IN, IN, IA, IN},
+ /*   T   */    {IN, IN, IN, IN} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 1,  0,  0,  0},
- /*   C   */    { 2,  0,  0,  0},
- /*   G   */    { 1,  2,  1,  0},
- /*   T   */    { 0,  2,  0,  0} },
+ /*   A   */  { {IA, IN, IN, IN},
+ /*   C   */    {IB, IN, IN, IN},
+ /*   G   */    {IA, IB, IA, IN},
+ /*   T   */    {IN, IB, IN, IN} },
 
  /*
   * Antiparallel
   */
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 0,  0,  3,  1},
- /*   C   */    { 0,  3,  0,  0},
- /*   G   */    { 0,  0,  0,  2},
- /*   T   */    { 0,  2,  0,  1} },
+ /*   A   */  { {IN, IN, IE, IC},
+ /*   C   */    {IN, IE, IN, IN},
+ /*   G   */    {IN, IN, IN, ID},
+ /*   T   */    {IN, ID, IN, IC} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 0,  0,  0,  0},
- /*   C   */    { 0,  3,  0,  2},
- /*   G   */    { 3,  0,  0,  0},
- /*   T   */    { 1,  0,  2,  1} },
+ /*   A   */  { {IN, IN, IN, IN},
+ /*   C   */    {IN, IE, IN, ID},
+ /*   G   */    {IE, IN, IN, IN},
+ /*   T   */    {IC, IN, ID, IC} },
 
  /* [H][W] */ /*  A   C   G   T */
- /*   A   */  { { 1,  0,  2,  0},
- /*   C   */    { 2,  0,  0,  0},
- /*   G   */    { 0,  0,  3,  0},
- /*   T   */    { 1,  3,  0,  0} },
+ /*   A   */  { {IC, IN, ID, IN},
+ /*   C   */    {ID, IN, IN, IN},
+ /*   G   */    {IN, IN, IE, IN},
+ /*   T   */    {IC, IE, IN, IN} },
 
  /* [W][H] */ /*  A   C   G   T */
- /*   A   */  { { 1,  2,  0,  1},
- /*   C   */    { 0,  0,  0,  3},
- /*   G   */    { 2,  0,  3,  0},
- /*   T   */    { 0,  0,  0,  0} },
+ /*   A   */  { {IC, ID, IN, IC},
+ /*   C   */    {IN, IN, IN, IE},
+ /*   G   */    {ID, IN, IE, IN},
+ /*   T   */    {IN, IN, IN, IN} },
 
 };
 
-/*
- * Triplet C1-C1-C1 angle
- */
-const int tab_twist[NUM_TRI_TYPES][4][4] = {
+
+const int tab_twist[NUM_TRI_TYPES][NBASES][NBASES] =
+{// Triplet C1-C1-C1 angle
  /*
   * Parallel
   */
@@ -242,6 +321,67 @@ const int tab_twist[NUM_TRI_TYPES][4][4] = {
 };
 
 
+typedef enum
+{// States for chunk analysis
+	S_CHUNK_INIT,
+	S_CHUNK_IN,
+	S_CHUNK_OUT
+} ch_state_t;
+
+
+/**
+ * Get maximal bonus per diagonal step
+ * @param type Triplex type
+ * @param iso_stay_bonus Bonus per isogroup stay
+ * @return Maximal bonus
+ */
+int get_max_bonus(int type, int iso_stay_bonus)
+{
+	int max = 0;
+	for (int i = 0; i < NBASES; i++)
+	{
+		for (int j = 0; j < NBASES; j++)
+		{
+			if (tab_score[type][i][j] > max)
+				max = tab_score[type][i][j];
+		}
+	}
+	return max + iso_stay_bonus;
+}
+
+
+/**
+ * Get number of antidiagonals to process
+ * @param max_bonus Maximal bonus per match
+ * @param ins_pen Penalization per insertion 
+ * @param max_len Maximal triplex body (stem) length
+ * @param min_score Minimal score
+ * @param max_loop Maximal loop length
+ * @return Number of diagonals to process
+ */
+int get_n_antidiag(
+	int max_bonus, int ins_pen, int max_len, int min_score, int max_loop)
+{
+	/* Maximal bonus for triplex body.
+	 * That means triplex stem length is exactly equal to max_len
+	 * and there is maximal amount of insertions to still satisfy
+	 * min_score limit */
+	int total_bonus = max_bonus * max_len;
+	
+	// Get score surplus which could absorb penalization for insertions
+	int score_surplus = total_bonus - min_score;
+	
+	int n_ins = 0;
+	
+	if (score_surplus > 0)
+	{// How many insertions can be accepted?
+		n_ins = score_surplus / ins_pen;
+	}
+	// For every match, two antidiagonals must be processed
+	return max_loop + 2*max_len + n_ins;
+}
+
+
 char nukl2char(char nukl)
 {
 	char res;
@@ -256,196 +396,247 @@ char nukl2char(char nukl)
 }
 
 
-char char2nukl(char ch)
+/**
+ * Initialize global CHAR2NUKL translation table
+ * Called from @see R_init_triplex
+ */
+void init_CHAR2NUKL_table()
 {
-	char res;
-	ch = tolower(ch);
-	switch(ch) {
-		case 'r':                   //  purine
-		case 'm':                   //  amino group
-		case 'w':                   //  weak interaction
-		case 'd':                   //  not C
-		case 'v':                   //  not T
-		case 'h':                   //  not G
-		case 'b':                   //  not A
-		case 's':                   //  strong interaction
-		case 'y':                   //  pyrimidine
-		case 'k':                   //  ketone
-			res = ch;
-			break;
-		
-		case 'a': res = A; break;   //  adenine
-		case 'c': res = C; break;   //  cytosine
-		case 'g': res = G; break;   //  guanine
-		case 't': res = T; break;   //  thymine    
-		
-		case 'n':                   //  any nucleotide
-		case '-':                   //  insertion of unspecified length
-		default:  res = -1;
+	for (int i = 0; i < ASCII_LOW; i++)
+		CHAR2NUKL[i] = INVALID_CHAR;
+	
+	CHAR2NUKL['a'] = A;
+	CHAR2NUKL['c'] = C;
+	CHAR2NUKL['g'] = G;
+	CHAR2NUKL['t'] = T;
+	CHAR2NUKL['n'] = 'n';
+	CHAR2NUKL['-'] = '-';
+	CHAR2NUKL['r'] = 'r';
+	CHAR2NUKL['m'] = 'm';
+	CHAR2NUKL['w'] = 'w';
+	CHAR2NUKL['d'] = 'd';
+	CHAR2NUKL['v'] = 'v';
+	CHAR2NUKL['h'] = 'h';
+	CHAR2NUKL['b'] = 'b';
+	CHAR2NUKL['s'] = 's';
+	CHAR2NUKL['y'] = 'y';
+	CHAR2NUKL['k'] = 'k';
+}
+
+
+/**
+ * Encode bases to enum values A,C,G,T
+ * @param seq DNA sequence
+ */
+void encode_bases(seq_t dna)
+{
+	char ch;
+	for (int i = 0; i < dna.len; i++)
+	{
+		ch = CHAR2NUKL[tolower(dna.seq[i])];
+		if (ch == INVALID_CHAR)
+		{
+			printf("%c unsupported\n", dna.seq[i]);
+			error("Unsupported symbol '%c' in input sequence.", dna.seq[i]);
+		}
+		else
+			dna.seq[i] = ch;
 	}
-	return res;
+}
+
+
+/**
+ * Get chunk intervals without N or - symbols
+ * NOTE This function does well only on encoded DNA sequence
+ * @param dna encoded DNA sequence @see encode_bases
+ * @return Intervals without N or - symbols
+ */
+intv_t *get_chunks(seq_t dna)
+{
+	int i, offset = 0;
+	ch_state_t state = S_CHUNK_INIT;
+	
+	// Create first interval as a list header
+	intv_t header = {0, 0, NULL};
+	intv_t *last = &header;
+	
+	for (i = 0; i < dna.len; i++)
+	{
+		switch (state)
+		{
+			case S_CHUNK_INIT:
+			// Initial decision
+				if (CHUNKCHAR[(int) dna.seq[i]])
+					state = S_CHUNK_OUT;
+				else
+					state = S_CHUNK_IN;
+				break;
+			case S_CHUNK_IN:
+			// Chunk body
+				if (CHUNKCHAR[(int) dna.seq[i]])
+				{// Export chunk
+					last->next = new_intv(offset, i-1);
+					last = last->next;
+					state = S_CHUNK_OUT;
+				}
+				break;
+			case S_CHUNK_OUT:
+			// Gap between chunks (N or - symbols)
+				if (!CHUNKCHAR[(int) dna.seq[i]])
+				{// Move offset
+					offset = i;
+					state = S_CHUNK_IN;
+				}
+				break;
+		}
+	}
+	if (state == S_CHUNK_IN)
+	{// Export last chunk
+		last->next = new_intv(offset, i-1);
+		last = last->next;
+	}
+	return header.next;
 }
 
 
 /**
  * Get triplex length
- * @param start_antidiag
- * @param end_antidiag
- * @param start_diag
- * @param end_diag
+ * @param start_antidiag Starting antidiagonal
+ * @param end_antidiag Ending antidiagonal number
+ * @param insertions Number of insertions
  * @return Triplex length
  */
-int get_length(int start_antidiag, int end_antidiag, int start_diag, int end_diag)
+int get_length(int start_antidiag, int end_antidiag, int insertions)
 {
-	int length;
-	
-	length = (end_antidiag-start_antidiag+2)/2;
-	/* diagonal odd to even - increment length */
-	if (((start_diag % 2) == 1) && ((end_diag % 2) == 0))
-		length++;
-	if (length == 0)
-		length = 1;
-	
-	return length;
+	return (end_antidiag - start_antidiag - insertions)/2 + 1;
 }
 
 
 /**
  * Get maximal score
+ * @param a Symbol from normal sequence
+ * @param b Symbol from reversed sequence
+ * @param dl Left matrix cell
+ * @param d  Current matrix cell
+ * @param dr Right matrix cell
+ * @param diag Diagonal number
+ * @param antidiag Antidiagonal number
+ * @param tri_type Triplex type
+ * @param max_loop Maximal loop length
+ * @param p Penalizations
  */
-t_diag get_max_score(
-	unsigned char a, unsigned char b, t_diag dl, t_diag d, t_diag dr,
+void get_max_score(
+	unsigned char a, unsigned char b, t_diag *dl, t_diag *d, t_diag *dr,
 	int diag, int antidiag, int tri_type, int max_loop, t_penalization *p)
 {
-	t_diag res;
+// 	t_diag res;
 	int incscore, mm_score;
 	
 	/* --------------------------------------------------------------- */
 	/* match or mismatch score computation  */
 	incscore = tab_score[tri_type][a][b];
-		// a trick to have zero or negative scores 
-		// for low quality triplets, changed all incscore comparisons to -9
-	if (incscore > -9) {  /* match */
-		mm_score = d.score + incscore;
-		if(d.dp_rule == DP_MATCH) {
-			if((tab_bound[tri_type][a][b] != d.bound) && (abs(tab_twist[tri_type][a][b] - d.twist) > p->dtwist ) && (abs(tab_twist[tri_type][a][b] - d.twist + d.dtwist) > p->dtwist)) {      
-			mm_score -= p->iso_change;
+	// a trick to have zero or negative scores 
+	// for low quality triplets, changed all incscore comparisons to TM
+	if (incscore > TM)
+	{// Match
+		mm_score = d->score + incscore;
+		if (d->dp_rule == DP_MATCH)
+		{// Check isomorphic group
+			if ((tab_bound[tri_type][a][b] != d->bound) &&
+			    (abs(tab_twist[tri_type][a][b] - d->twist) > p->dtwist ) &&
+			    (abs(tab_twist[tri_type][a][b] - d->twist + d->dtwist) > p->dtwist))
+			{
+				mm_score -= p->iso_change;
 			}
-			else {
-			mm_score += p->iso_stay;
-			}                                      
+			else
+			{
+				mm_score += p->iso_stay;
+			}
 		}
 	}
-	else { /* mismatch */
-		mm_score = d.score - p->mismatch;
+	else
+	{// Mismatch
+		mm_score = d->score - p->mismatch;
 	}
 	
-	/* match/mismatch is better */
-	if ((mm_score >= dl.score - p->insertion) && (mm_score >= dr.score - p->insertion)) {
-		res = d;
-		res.score = mm_score;
-		res.dp_rule = DP_MISMATCH;
+	if ((mm_score >= dl->score - p->insertion) &&
+	    (mm_score >= dr->score - p->insertion))
+	{// Match/mismatch is better
+// 		res = d;
+// 		res.score = mm_score;
+// 		res.dp_rule = DP_MISMATCH;
+		d->score = mm_score;
+		d->dp_rule = DP_MISMATCH;
 		
-		/* match */
-		if(incscore > -9) {
-			res.dp_rule = DP_MATCH;
-			res.bound = tab_bound[tri_type][a][b];
-			res.twist = tab_twist[tri_type][a][b];
-			res.dtwist = res.twist - d.twist;
-			if (mm_score >= res.max_score) {
-			res.max_score = mm_score;
-			res.max_score_pos.diag = diag;
-			res.max_score_pos.antidiag = antidiag;
-			res.max_indels = res.indels;
+		if (incscore > TM)
+		{// Match
+// 			res.dp_rule = DP_MATCH;
+// 			res.bound = tab_bound[tri_type][a][b];
+// 			res.twist = tab_twist[tri_type][a][b];
+// 			res.dtwist = res.twist - d->twist;
+			d->dp_rule = DP_MATCH;
+			d->bound = tab_bound[tri_type][a][b];
+			d->dtwist = tab_twist[tri_type][a][b] - d->twist;
+			d->twist = tab_twist[tri_type][a][b];
+			
+// 			if (mm_score >= res.max_score)
+			if (mm_score >= d->max_score)
+			{
+// 				res.max_score = mm_score;
+// 				res.max_score_pos.diag = diag;
+// 				res.max_score_pos.antidiag = antidiag;
+// 				res.max_indels = res.indels;
+				d->max_score = mm_score;
+				d->max_score_pos.diag = diag;
+				d->max_score_pos.antidiag = antidiag;
+				d->max_indels = d->indels;
 			}
 		}
 	}
-	/* --------------------------------------------------------------- */
-	/* insertion or deletion */
-	else {
-		/* get from left diagonal */
-		if (dl.score > dr.score) {
-			res = dl;
-			res.score = dl.score - p->insertion;
-			res.dp_rule = DP_LEFT;
+	else
+	{// Insertion or deletion
+		if (dl->score > dr->score)
+		{// Get from left diagonal
+// 			res = dl;
+// 			res.score = dl->score - p->insertion;
+// 			res.dp_rule = DP_LEFT;
+			*d = *dl;
+			d->score = dl->score - p->insertion;
+			d->dp_rule = DP_LEFT;
 		}
-		/* get from right diagonal */
-		else {
-			res = dr;
-			res.score = dr.score - p->insertion;
-			res.dp_rule = DP_RIGHT;
+		else
+		{// Get from right diagonal
+// 			res = dr;
+// 			res.score = dr->score - p->insertion;
+// 			res.dp_rule = DP_RIGHT;
+			*d = *dr;
+			d->score = dr->score - p->insertion;
+			d->dp_rule = DP_RIGHT;
 		}
-		res.indels++;
-	}
-	/* --------------------------------------------------------------- */
-	/* local alignment - only for loop */
-	if ((res.score < 0) && (antidiag <= max_loop)) {
-		res.score = 0;
-		res.max_score = 0;
-		res.start.diag = diag;
-		res.start.antidiag = antidiag;
-		res.max_score_pos.diag = diag;
-		res.max_score_pos.antidiag = antidiag;
-		res.indels = 0;
-		res.max_indels = 0;
+// 		res.indels++;
+		d->indels++;
 	}
 	
-	/* --------------------------------------------------------------- */
-	return res;
-}
-
-
-/**
- * Handle special FASTA symbols
- */
-void handle_special(char *a, char *b, int triplex_type, t_diag d, t_penalization *p)
-{
-	unsigned char *n1 = get_meaning(*a);
-	unsigned char *n2 = get_meaning(*b);  
-	
-	unsigned char i = 0, j = 0, max = - 99, tmp;
-	while(n1[i] != '|') {
-		j = 0;
-		while(n2[j] != '|') {
-			tmp = tab_score[triplex_type][n1[i]][n2[j]];
-			if((tab_bound[triplex_type][n1[i]][n2[j]] != d.bound) && (abs(tab_twist[triplex_type][n1[i]][n2[j]] - d.twist) > p->dtwist ) && (abs(tab_twist[triplex_type][n1[i]][n2[j]] - d.twist + d.dtwist) > p->dtwist)) {      
-				tmp -= p->iso_change;
-			}
-			else {
-				tmp += p->iso_stay;
-			}                                            
-			if(tmp > max) {
-				max = tmp;
-				*a = n1[i];
-				*b = n2[j];
-			}      
-			j++;
-		}
-		i++;
-	}  
-}
-
-
-/**
- * Get meaning of special FASTA symbol
- */
-unsigned char *get_meaning(char n)
-{
-	switch(n) {
-		case 0:   return special[0];
-		case 1:   return special[1];
-		case 2:   return special[2];
-		case 3:   return special[3];
-		case 'r': return special[4];
-		case 'y': return special[5];
-		case 'k': return special[6];
-		case 'm': return special[7];
-		case 's': return special[8];
-		case 'w': return special[9];
-		case 'b': return special[10];
-		case 'd': return special[11];
-		case 'h': return special[12];
-		case 'v': return special[13];
-		default:  return special[0];
+// 	if ((res.score < 0) && (antidiag <= max_loop))
+	if ((d->score < 0) && (antidiag <= max_loop))
+	{// Local alignment only for loop
+// 		res.score = 0;
+// 		res.max_score = 0;
+// 		res.start.diag = diag;
+// 		res.start.antidiag = antidiag;
+// 		res.max_score_pos.diag = diag;
+// 		res.max_score_pos.antidiag = antidiag;
+// 		res.indels = 0;
+// 		res.max_indels = 0;
+		d->score = 0;
+		d->max_score = 0;
+		d->start.diag = diag;
+		d->start.antidiag = antidiag;
+		d->max_score_pos.diag = diag;
+		d->max_score_pos.antidiag = antidiag;
+		d->indels = 0;
+		d->max_indels = 0;
 	}
+	
+// 	return res;
 }

@@ -18,16 +18,10 @@
 #include "libtriplex.h"
 #include "dl_list.h"
 
-#define ASCII_LOW 128
-#define INVALID_CHAR -1
 
 /* Global Variable  */
 t_dl_list dl_list, dl_list_arr[8];
 int act_dl_list;
-
-/* Translation table from ascii symbols to
- * internal representation of DNA bases */
-int CHAR2NUKL[ASCII_LOW];
 
 
 /**
@@ -42,8 +36,10 @@ seq_t decode_DNAString(SEXP dnaobject)
 	cachedCharSeq x = cache_XRaw(dnaobject);
 	// Initialize structure for decoded string
 	seq_t dna;
-	dna.seq = Calloc(x.length + 1, char);
 	dna.len = x.length;
+	dna.seq = malloc((x.length + 1) * sizeof(char));
+	if (dna.seq == NULL)
+		error("Failed to allocate memory for decoded DNA string.");
 	
 	int i;
 	for (i = 0; i < dna.len; i++)
@@ -51,24 +47,6 @@ seq_t decode_DNAString(SEXP dnaobject)
 	
 	dna.seq[i] = '\0';
 	return dna;
-}
-
-
-/**
- * Encode bases to enum values A,C,G,T
- * @param seq DNA sequence
- */
-void encode_bases(char *seq)
-{
-	int ch;
-	for (int i = 0; seq[i] != '\0'; i++)
-	{
-		ch = CHAR2NUKL[(unsigned) seq[i]];
-		if (ch == INVALID_CHAR)
-			error("Unsupported symbol '%c' in input sequence.", seq[i]);
-		else
-			seq[i] = (char) ch;
-	}
 }
 
 
@@ -172,34 +150,8 @@ void save_result(
 
 
 /**
- * Initialize global CHAR2NUKL translation table
- * Called from @see R_init_triplex
- */
-void init_CHAR2NUKL_table()
-{
-	for (int i = 0; i < ASCII_LOW; i++)
-		CHAR2NUKL[i] = INVALID_CHAR;
-	
-	CHAR2NUKL['r'] = 'r';
-	CHAR2NUKL['m'] = 'm';
-	CHAR2NUKL['w'] = 'w';
-	CHAR2NUKL['d'] = 'd';
-	CHAR2NUKL['v'] = 'v';
-	CHAR2NUKL['h'] = 'h';
-	CHAR2NUKL['b'] = 'b';
-	CHAR2NUKL['s'] = 's';
-	CHAR2NUKL['y'] = 'y';
-	CHAR2NUKL['k'] = 'k';
-	CHAR2NUKL['a'] = A;
-	CHAR2NUKL['c'] = C;
-	CHAR2NUKL['g'] = G;
-	CHAR2NUKL['t'] = T;
-}
-
-
-/**
  * Search triplexes in DNA sequence
- * .Call entry point
+ * NOTE .Call entry point
  * @param dnaobject DNAString object
  * @param type      Triplex type vector
  * @param rparams   Custom algorithm options
@@ -220,8 +172,7 @@ SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP rparams, SEXP pbw)
 		.min_len = p[P_MIN_LEN],
 		.max_len = p[P_MAX_LEN],
 		.min_loop = p[P_MIN_LOOP],
-		.max_loop = p[P_MAX_LOOP],
-		.max_chunk_size = MAX_CHUNK_SIZE
+		.max_loop = p[P_MAX_LOOP]
 	};
 	
 	t_penalization pen =
@@ -240,26 +191,28 @@ SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP rparams, SEXP pbw)
 	MI[2] = MI[3] = MI[6] = MI[7] = p[P_MI_2];
 	
 	int *t = INTEGER(type);
-	seq_t dna;
+	seq_t dna = decode_DNAString(dnaobject);
+	encode_bases(dna);
+	intv_t *chunk = get_chunks(dna);
 	
-	for (int i = 0; i<8; i++)
+	for (int i = 0; i < NUM_TRI_TYPES; i++)
 		dl_list_init(&dl_list_arr[i], p[P_MAX_LEN]+p[P_MAX_LOOP]); // FIXME
 	
 	for (int i = 0; i < LENGTH(type); i++)
 	{// Call original main function for all specified vector types
 		act_dl_list = i;
-
-		dna = decode_DNAString(dnaobject);
 		
 		params.tri_type = t[i];
-		main_search(dna, params, pen, *INTEGER(pbw));
+		main_search(dna, chunk, &params, &pen, *INTEGER(pbw));
 		dl_list_group_filter(&dl_list_arr[i]);
-		
-		Free(dna.seq);
 	}
-	dl_list_merge_sort(dl_list_arr, &dl_list, 8);
+	
+	dl_list_merge_sort(dl_list_arr, &dl_list, NUM_TRI_TYPES);
 	list = export_results(&dl_list);
 	dl_list_free(&dl_list);
+	
+	free(dna.seq);
+	free_intv(chunk);
 	
 	return list;
 }
