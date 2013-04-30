@@ -131,30 +131,6 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 
 
 /**
- * P-function
- * @param score    Triplex score
- * @param tri_type Triplex type
- * @return P-function value
- */
-double p_function(int score, int tri_type)
-{
-	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
-}
-
-
-/**
- * E-value
- * @param score    Triplex score
- * @param tri_type Triplex type
- * @return E-value
- */
-double e_value(int score, int tri_type)
-{
-	return p_function(score, tri_type);
-}
-
-
-/**
  * P-value
  * @param score    Triplex score
  * @param tri_type Triplex type
@@ -162,7 +138,7 @@ double e_value(int score, int tri_type)
  */
 double p_value(int score, int tri_type)
 {
-	return 1-exp(-p_function(score, tri_type));
+	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
 }
 
 
