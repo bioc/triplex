@@ -52,6 +52,19 @@ void print_rule_array(t_diag* ptr, int size, int border);
 void print_status_array(t_diag* ptr, int size, int border);
 
 
+
+/**
+ * P-value
+ * @param score Triplex score
+ * @param tri_type Triplex type
+ * @return P-value
+ */
+static inline double p_function(int score, int tri_type)
+{
+	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
+}
+
+
 /**
  * Search triplex in DNA sequence
  * @param dna encoed DNA sequence, @see encode_bases
@@ -136,42 +149,6 @@ void main_search(seq_t dna, intv_t *chunk, t_params *params, t_penalization *pen
 	
 	if (pb.max >= PB_SHOW_LIMIT)
 		Rprintf("\n");
-}
-
-
-/**
- * P-function
- * @param score Triplex score
- * @param tri_type Triplex type
- * @return P-function value
- */
-static inline double p_function(int score, int tri_type)
-{
-	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
-}
-
-
-/**
- * E-value
- * @param score Triplex score
- * @param tri_type Triplex type
- * @return E-value
- */
-static inline double e_value(int score, int tri_type)
-{
-	return p_function(score, tri_type);
-}
-
-
-/**
- * P-value
- * @param score Triplex score
- * @param tri_type Triplex type
- * @return P-value
- */
-static inline double p_value(int score, int tri_type)
-{
-	return 1-exp(-p_function(score, tri_type));
 }
 
 
