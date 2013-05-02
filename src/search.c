@@ -59,7 +59,7 @@ void print_status_array(t_diag* ptr, int size, int border);
  * @param tri_type Triplex type
  * @return P-value
  */
-static inline double p_function(int score, int tri_type)
+static inline double p_value(int score, int tri_type)
 {
 	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
 }
