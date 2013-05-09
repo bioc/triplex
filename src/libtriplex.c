@@ -435,10 +435,7 @@ void encode_bases(seq_t dna)
 	{
 		ch = CHAR2NUKL[tolower(dna.seq[i])];
 		if (ch == INVALID_CHAR)
-		{
-			printf("%c unsupported\n", dna.seq[i]);
 			error("Unsupported symbol '%c' in input sequence.", dna.seq[i]);
-		}
 		else
 			dna.seq[i] = ch;
 	}

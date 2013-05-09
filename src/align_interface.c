@@ -70,7 +70,7 @@ SEXP triplex_align(SEXP seq, SEXP type, SEXP rparams)
 	
 	// Ininitalize global alignment string
 	tx_align.len = 2 * dna.len;
-	tx_align.seq = Calloc(tx_align.len, char);
+	tx_align.seq = calloc(tx_align.len, sizeof(char));
 	tx_align_pos = 0;
 	
 	main_align(dna, params, pen);
@@ -80,8 +80,8 @@ SEXP triplex_align(SEXP seq, SEXP type, SEXP rparams)
 	SET_STRING_ELT(res, 0, mkChar(tx_align.seq));
 	UNPROTECT(1);
 	
-	Free(dna.seq);
-	Free(tx_align.seq);
+	free(dna.seq);
+	free(tx_align.seq);
 	
 	return res;
 }

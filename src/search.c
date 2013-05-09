@@ -525,8 +525,8 @@ void search(
 	char *piece, int piece_l, int offset, int n_antidiag, int max_bonus,
 	t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb)
 {
-	int i, ad, d, length, treshold, d_count, d_under_tres, d_in_regions, ad_start;
-	double ad_width, ad_perc, tres_ratio, real_ratio;
+	int i, ad, d, length, treshold, d_count, d_under_tres, ad_start;
+	double tres_ratio;
 	
 	// Starting antidiagonal
 	ad_start = params->min_loop + 1;
@@ -534,16 +534,8 @@ void search(
 	if (piece_l < n_antidiag)
 		n_antidiag = piece_l;
 	
-	ad_width = n_antidiag - ad_start;
-	
 	intv_t *triplex_regions = new_intv(0, piece_l - 1);
-	intv_t *tr = new_intv(0, piece_l - 1);
 	intv_t *intv = NULL;
-	
-// 	char fname[128];
-// 	snprintf(fname, 128, "experiments/tres_ratio_on_min_score/min_score_%d_%d.data", params->min_score, params->tri_type);
-// 	
-// 	FILE *fd = fopen(fname, "w");
 	
 	/* ad = antidiagonal number */
 	for (ad = ad_start; ad < n_antidiag; ad++)
@@ -657,7 +649,6 @@ void search(
 // 		set_txt_progress_bar(pb, offset + ad_perc * piece_l);
 		set_txt_progress_bar(pb, offset + piece_l);
 	}
-// 	fclose(fd);
 	
 	/* Print nonexported triplexes */
 	for (i = 1; i < (2*piece_l); i++)

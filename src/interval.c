@@ -55,11 +55,11 @@ void free_intv(intv_t *intv)
 void print_intv(intv_t *intv)
 {
 	if (intv == NULL)
-		printf("No intervals.\n");
+		Rprintf("No intervals.\n");
 	
 	while (intv != NULL)
 	{
-		printf("%d, %d\n", intv->start, intv->end);
+		Rprintf("%d, %d\n", intv->start, intv->end);
 		intv = intv->next;
 	}
 }

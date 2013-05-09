@@ -31,7 +31,6 @@ triplex.align <- function(t)
 	
 	p <- t@params
 	p[MIN_LOOP] <- to_double(lwidth(t))
-	#p[MIN_LOOP] <- p[MIN_LOOP] + 1
 	type <- to_double(type(t))
 	
 	triplex <- .Call("triplex_align", seq, type, p)

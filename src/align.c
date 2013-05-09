@@ -50,7 +50,7 @@ void main_align(seq_t dna, t_params params, t_penalization pen)
 	encode_bases(dna);
 	
 	/* Diag structure array alocation */
-	t_diag *diag = Calloc(2*dna.len, t_diag);
+	t_diag *diag = malloc(2*dna.len * sizeof(t_diag));
 	
 	/* Diag structure initialization */
 	for(i = 0; i < 2*dna.len; i++)
@@ -82,7 +82,7 @@ void main_align(seq_t dna, t_params params, t_penalization pen)
 	print_triplex(mat, dna.seq, dna.len);
 		
 	free_matrix(mat, dna.len);
-	Free(diag);
+	free(diag);
 }
 
 
@@ -96,8 +96,8 @@ void main_align(seq_t dna, t_params params, t_penalization pen)
  */
 void print_triplex(t_diag** mat, char* seq, int seq_l)
 {
-	char *body1 = Calloc(seq_l, char);
-	char *body2 = Calloc(seq_l, char);
+	char *body1 = calloc(seq_l, sizeof(char));
+	char *body2 = calloc(seq_l, sizeof(char));
 	
 	memset(body1, '\0', seq_l);
 	memset(body2, '\0', seq_l);
@@ -157,8 +157,8 @@ void print_triplex(t_diag** mat, char* seq, int seq_l)
 	for (x = i2 - 1; x >= 0; x--)
 		Aprintf(body2[x]);
 	
-	Free(body1);
-	Free(body2);
+	free(body1);
+	free(body2);
 }
 
 
