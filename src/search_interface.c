@@ -11,6 +11,7 @@
 #include <ctype.h>
 
 #include "IRanges_interface.h"
+#include "XVector_interface.h"
 #include "Biostrings_interface.h"
 
 #include "search_interface.h"
