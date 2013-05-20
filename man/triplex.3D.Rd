@@ -8,6 +8,7 @@ Triplex visualization, 3D representation
 \description{
 This function visualizes a \code{\link{TriplexViews}} object as a 3D model.
 Its structure can be drawn with automatic optimalizations.
+To use this function, please install suggested rgl package from CRAN.
 }
 
 \details{
