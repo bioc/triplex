@@ -32,6 +32,10 @@ triplex.3D <- function(
 	bgr.col = "white",
 	bbone.n = 20)
 {
+	if ("rgl" %in% installed.packages()[,"Package"])
+		library("rgl")
+	else
+		stop("Please install rgl package from CRAN to use this function.")
 
 	# processing of inputs
 	results <- triplex.input(triplex);

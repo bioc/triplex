@@ -24,7 +24,7 @@ Description: This package provides functions for identification and
 License: BSD
 URL: http://www.fi.muni.cz/~lexa/triplex/
 biocViews: SequenceMatching, GeneRegulation
-Depends: R (>= 2.15.0), rgl (>= 0.93.932), Biostrings (>= 2.26.0)
-Imports: methods, grid, rgl, Biostrings, GenomicRanges
-Suggests: BSgenome.Celegans.UCSC.ce10, rtracklayer, GenomeGraphs
+Depends: R (>= 2.15.0), Biostrings (>= 2.26.0)
+Imports: methods, grid, Biostrings, GenomicRanges
+Suggests: rgl (>= 0.93.932), BSgenome.Celegans.UCSC.ce10, rtracklayer, GenomeGraphs
 LinkingTo: Biostrings, IRanges
