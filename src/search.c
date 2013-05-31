@@ -20,9 +20,29 @@
 #include "search_interface.h"
 #include "progress.h"
 
+/*
+Triplexfit output as reported by Matej Lexa on 2013-04-30:
 
-double LAMBDA[NUM_TRI_TYPES] = {0.71, 0.71, 0.67, 0.67, 0.71, 0.71, 0.67, 0.67};
+Ecoli_par:  mu = 7.4805, lambda = 0.8892, hits = 194641
+Ecoli_apar: mu = 7.6569, lambda = 0.8092, hits = 130954
+Human_par:  mu = 7.5835, lambda = 0.8433, hits = 145915
+Human_apar: mu = 7.9611, lambda = 0.6910, hits = 194391
+
+Sequence length: 4800000
+
+Average_par:  mu = 7.53, lambda = 0.87, hits = 170278, ratio = 0.0355
+Average_apar: mu = 7.81, lambda = 0.75, hits = 162672, ratio = 0.0339
+*/
+
+double RN[NUM_TRI_TYPES] = {0.0355, 0.0355, 0.0355, 0.0355, 0.0339, 0.0339, 0.0339, 0.0339};
+
+double MI[NUM_TRI_TYPES]     = {7.53, 7.53, 7.53, 7.53, 7.81, 7.81, 7.81, 7.81};
+double LAMBDA[NUM_TRI_TYPES] = {0.87, 0.87, 0.87, 0.87, 0.75, 0.75, 0.75, 0.75};
+
+/* Previous values:
 double MI[NUM_TRI_TYPES]     = {5.88, 5.88, 6.05, 6.05, 5.88, 5.88, 6.05, 6.05};
+double LAMBDA[NUM_TRI_TYPES] = {0.71, 0.71, 0.67, 0.67, 0.71, 0.71, 0.67, 0.67};
+*/
 const int TAB_STRAND[NUM_TRI_TYPES] = {0, 0, 1, 1, 1, 1, 0, 0};
 
 /* Status variable flags */
@@ -33,8 +53,8 @@ const int TAB_STRAND[NUM_TRI_TYPES] = {0, 0, 1, 1, 1, 1, 0, 0};
 #define PB_SHOW_LIMIT 1000000
 
 /** Function prototypes **/
-void export_data(t_diag diag, int tri_type, int offset);
-void search(char *piece, int piece_l, int offset, t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb);
+void export_data(t_diag diag, int tri_type, int offset, int seq_len);
+void search(char *piece, int piece_l, int offset, int seq_len, t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb);
 
 void print_score_array(t_diag* ptr, int size, int border);
 void print_rule_array(t_diag* ptr, int size, int border);
@@ -117,7 +137,7 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 				diag[i].dp_rule = DP_MISMATCH;
 			}  
 			
-			search(piece, piece_l, chunk_offset+piece_offset, diag, &params, &pen, &pb);
+			search(piece, piece_l, chunk_offset+piece_offset, dna.len, diag, &params, &pen, &pb);
 		}
 		
 		Free(diag);
@@ -131,16 +151,27 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 
 
 /**
- * P-value
- * @param score    Triplex score
+ * P function: P(S>=x)
+ * @param score Triplex score
  * @param tri_type Triplex type
- * @return P-value
+ * @return P function value
  */
-double p_value(int score, int tri_type)
+double p_function(int score, int tri_type)
 {
 	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
 }
 
+/**
+ * P-value
+ * @param score Triplex score
+ * @param tri_type Triplex type
+ * @param seq_len DNA sequence length
+ * @return P-value
+ */
+double p_value(int score, int tri_type, int seq_len)
+{
+	return 1-exp(-RN[tri_type]*seq_len*p_function(score, tri_type));
+}
 
 /**
  * Export triplex
@@ -148,7 +179,7 @@ double p_value(int score, int tri_type)
  * @param tri_type
  * @param offset
  */
-void export_data(t_diag diag, int tri_type, int offset)
+void export_data(t_diag diag, int tri_type, int offset, int seq_len)
 {
 	int start_ch, end_ch;
 	int start_gap, end_gap;
@@ -164,7 +195,7 @@ void export_data(t_diag diag, int tri_type, int offset)
 		offset + start_ch + 1,
 		offset + end_ch + 1,
 		diag.max_score,
-		p_value(diag.max_score, tri_type),
+		p_value(diag.max_score, tri_type, seq_len),
 		diag.max_indels,
 		tri_type,
 		offset + start_gap + 1 + 1,  /* correction to loop start character */
@@ -239,14 +270,15 @@ void print_status_array(t_diag* ptr, int size, int border)
 /**
  * Search for triplexes in given piece
  * @param piece   Given sequence
- * @param piece_l Length of given sequence
+ * @param piece_l Length of given sequence piece
  * @param offset  Offset from the real start of sequence
+ * @param seq_len Total sequence length
  * @param diag    t_diag array used to search for triplexes
  * @param params  Application parameters
  * @param pen     Penalization scores
  * @param pb      Progress bar
  */
-void search(char *piece, int piece_l, int offset, t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb)
+void search(char *piece, int piece_l, int offset, int seq_len, t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb)
 {
 	int i, x, d, restore = 0, length, exp_num = 0;
 	int x_start, x_limit;
@@ -293,10 +325,10 @@ void search(char *piece, int piece_l, int offset, t_diag *diag, t_params *params
 				{
 					exp_num++;
 					diag[d].status = STAT_EXPORT;
-					if(p_value(diag[d].max_score, params->tri_type) < params->p_val)
+					if (p_value(diag[d].max_score, params->tri_type, seq_len) <= params->p_val)
 					{
-						export_data(diag[d], params->tri_type, offset);                               
-					}          
+						export_data(diag[d], params->tri_type, offset, seq_len);                               
+					}
 				}
 			}
 			/* Actual score does not satisfy the required quality */
@@ -309,9 +341,9 @@ void search(char *piece, int piece_l, int offset, t_diag *diag, t_params *params
 				{
 					diag[d].status = STAT_EXPORT;
 					exp_num++;          
-					if(p_value(diag[d].max_score, params->tri_type) < params->p_val)
+					if (p_value(diag[d].max_score, params->tri_type, seq_len) <= params->p_val)
 					{
-						export_data(diag[d], params->tri_type, offset);
+						export_data(diag[d], params->tri_type, offset, seq_len);
 					}
 					diag[d].max_score = 0;
 				}
@@ -343,8 +375,8 @@ void search(char *piece, int piece_l, int offset, t_diag *diag, t_params *params
 	int nexp_num = 0;
 	for(i = 1; i < (2*piece_l); i++) {
 		if ((diag[i].status & STAT_QUALITY) && (diag[i].status & STAT_MINLEN)) {      
-			if(p_value(diag[i].max_score, params->tri_type) < params->p_val) {
-			export_data(diag[i], params->tri_type, offset);        
+			if (p_value(diag[i].max_score, params->tri_type, seq_len) <= params->p_val) {
+				export_data(diag[i], params->tri_type, offset, seq_len);        
 			}
 			nexp_num++;
 		}

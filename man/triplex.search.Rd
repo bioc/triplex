@@ -55,16 +55,16 @@ triplex.search(
     Maximal triplex loop length.
   }
   \item{lambda_1}{
-    Lambda for triplex types 0,1,4,5.
+    Lambda for parallel triplex types 0,1,2,3.
   }
   \item{lambda_2}{
-    Lambda for triplex types 2,3,6,7.
+    Lambda for antiparallel triplex types 4,5,6,7.
   }
   \item{mi_1}{
-    Mi for triplex types 0,1,4,5.
+    Mi for parallel triplex types 0,1,2,3.
   }
   \item{mi_2}{
-    Mi for triplex types 2,3,6,7.
+    Mi for antiparallel triplex types 4,5,6,7.
   }
   \item{dtwist_pen}{
     Dtwist penalization.
