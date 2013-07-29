@@ -6,7 +6,7 @@
 \usepackage[utf8]{inputenc}
 
 \title{Triplex: User Guide}
-\author{Matej Lexa, Tom\`{a}\u{s} Mart\'{i}nek, Ji\u{r}\'{i} Hon}
+\author{Matej Lexa, Tom\'{a}\v{s} Mart\'{i}nek, Ji\v{r}\'{i} Hon}
 
 
 \begin{document}
@@ -103,7 +103,7 @@ following command. Please note, that the output list contains potential
 triplexes of type 1 only.
 
 <<>>=
-triplex.search(seq, type=(1))
+triplex.search(seq, type=1)
 @
 
 

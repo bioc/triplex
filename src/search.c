@@ -114,7 +114,17 @@ void main_search(seq_t dna, intv_t *chunk, t_params *params, t_penalization *pen
 		delta = MAX_PIECE_SIZE;
 		
 		piece_l = MAX_PIECE_SIZE + pieces_overlap;
-		last_piece_l = chunk_len - ((npieces-1) * MAX_PIECE_SIZE);
+		last_piece_l = chunk_len - (npieces-1)*MAX_PIECE_SIZE;
+		
+		/* If last piece is shorter than overlap, then remove it from computation
+		 * because previous piece (if exist) calculates its */
+		if ((last_piece_l <= pieces_overlap) && (npieces > 1))
+		{
+			npieces--;
+			last_piece_l = chunk_len - (npieces-1)*MAX_PIECE_SIZE;
+			/* NOTE: should be same as
+			 * last_piece_l = MAX_PIECE_SIZE + last_piece_l */
+		}
 		
 		for (int j = 0, piece_offset = chunk->start;
 		     j < npieces;
@@ -537,6 +547,10 @@ void search(
 	intv_t *triplex_regions = new_intv(0, piece_l - 1);
 	intv_t *intv = NULL;
 	
+	FILE *fd = fopen("dp_matrix_vis_nooptim.dat", "a");
+	
+	printf("n_antidiag: %d\n", n_antidiag);
+	
 	/* ad = antidiagonal number */
 	for (ad = ad_start; ad < n_antidiag; ad++)
 	{
@@ -554,6 +568,8 @@ void search(
 			     i <= intv->end;
 			     i++, d += 2)
 			{
+				fprintf(fd, "%d %d\n", i + offset, i-ad + offset);
+				
 				/* Max score and length calcualtion */
 				get_max_score(
 					piece[i], piece[i-ad],
@@ -575,7 +591,7 @@ void search(
 					if ((diag[d].status & STAT_MINLEN) && ((d == (ad+1)) || (d == (2*piece_l-ad-1))))
 					{
 						diag[d].status = STAT_EXPORT;
-						if (p_value(diag[d].max_score, params->tri_type) < params->p_val)
+						if (p_value(diag[d].max_score, params->tri_type) <= params->p_val)
 						{
 							export_data(diag[d], params->tri_type, offset);                               
 						}          
@@ -590,7 +606,7 @@ void search(
 						((diag[d].status & STAT_QUALITY)) && ((diag[d].status & STAT_MINLEN)))
 					{
 						diag[d].status = STAT_EXPORT;
-						if (p_value(diag[d].max_score, params->tri_type) < params->p_val)
+						if (p_value(diag[d].max_score, params->tri_type) <= params->p_val)
 						{
 							export_data(diag[d], params->tri_type, offset);
 						}
@@ -610,7 +626,7 @@ void search(
 		
 		tres_ratio = (double) d_under_tres / d_count;
 		
-		if (tres_ratio >= TRES_RATIO)
+		if (0)//tres_ratio >= TRES_RATIO)
 		{
 			triplex_regions = get_triplex_regions(ad, n_antidiag, diag, triplex_regions, treshold);
 			
@@ -642,7 +658,8 @@ void search(
 	// Free last version of triplex regions
 	free_intv(triplex_regions);
 	
-		
+	fclose(fd);
+	
 	if (pb->max >= PB_SHOW_LIMIT)
 	{// Redraw progress bar
 // 		ad_perc = (ad+1 - ad_start) / ad_width;
@@ -655,7 +672,7 @@ void search(
 	{
 		if ((diag[i].status & STAT_QUALITY) && (diag[i].status & STAT_MINLEN))
 		{      
-			if (p_value(diag[i].max_score, params->tri_type) < params->p_val)
+			if (p_value(diag[i].max_score, params->tri_type) <= params->p_val)
 				export_data(diag[i], params->tri_type, offset);
 		}
 	}
