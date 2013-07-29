@@ -111,6 +111,16 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 		piece_l = params.max_chunk_size + pieces_overlap;
 		last_piece_l = chunk_l - (pieces-1)*params.max_chunk_size;
 		
+		/* If last piece is shorter than overlap, then remove it from computation
+		 * because previous piece (if exist) calculates its */
+		if ((last_piece_l <= pieces_overlap) && (pieces > 1))
+		{
+			pieces--;
+			last_piece_l = chunk_l - (pieces-1)*delta;
+			/* NOTE: should be same as
+			 * last_piece_l = params.max_chunk_size + last_piece_l */
+		}
+		
 		/* Diag structure array alocation */
 		t_diag *diag = Calloc(2*piece_l, t_diag);
 		
@@ -142,7 +152,7 @@ void main_search(seq_t dna, t_params params, t_penalization pen, int pbw)
 		
 		Free(diag);
 		
-		chunk = strtok(NULL, "n-");
+		chunk = strtok(NULL, "n-rmwdvhbsyk");
 	}
 	
 	if (pb.max >= PB_SHOW_LIMIT)

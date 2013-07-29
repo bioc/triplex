@@ -12,10 +12,10 @@ triplex-forming sequences in DNA.
 triplex.search(
   dna, 
   type       = 0:7,
-  min_score  = 3,
-  p_value    = 0.05,
+  min_score  = 10,
+  p_value    = 1,
   min_len    = 6,
-  max_len    = 10,
+  max_len    = 25,
   min_loop   = 3,
   max_loop   = 10,
   lambda_1   = 0.67,
