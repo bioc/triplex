@@ -163,8 +163,8 @@ using two filtration mechanisms: (1) by specifying the minimal acceptable
 score value using {\it min\_score} parameter or (2) by specifying maximum
 acceptable P-value of results using {\it p\_value} parameter. The P-value
 represents the probability of occurrence of detected triplexes in a random
-sequence.  By default, only triplexes with P-value equal or less than 0.05
-are reported.  Calculation of P-value depends on two extreme value
+sequence. % By default, only triplexes with P-value equal or less than 0.05 are reported.
+Calculation of P-value depends on two extreme value
 distribution parameters {\it lambda} and {\it mi}. It is highly recommended
 to see~\cite{Lexa2011} prior changing the {\it lambda} or {\it mi}
 parameters.
