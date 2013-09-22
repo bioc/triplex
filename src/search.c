@@ -593,8 +593,8 @@ void search(
 						diag[d].status = STAT_EXPORT;
 						if (p_value(diag[d].max_score, params->tri_type) <= params->p_val)
 						{
-							export_data(diag[d], params->tri_type, offset);                               
-						}          
+							export_data(diag[d], params->tri_type, offset);
+						}
 					}
 				}
 				/* Actual score does not satisfy the required quality */

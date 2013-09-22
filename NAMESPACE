@@ -2,6 +2,8 @@ useDynLib("triplex")
 
 import(methods)
 import(grid)
+import(XVector)
+import(IRanges)
 import(Biostrings)
 import(GenomicRanges)
 

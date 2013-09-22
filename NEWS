@@ -1,9 +1,15 @@
+CHANGES IN VERSION 1.2.0
+------------------------
+
+
+
+
 CHANGES IN VERSION 1.0.0
--------------------------
+------------------------
 
 BUG FIXES
 
-    o Fixed P-value definition.
+    o Fixed P-value definition, see vignette for detail information.
 
     o Fixed splitting sequence into smaller computational pieces. The end
       of larger sequences was not searched properly.

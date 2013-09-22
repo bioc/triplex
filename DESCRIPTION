@@ -20,11 +20,11 @@ Description: This package provides functions for identification and
   The potential H-DNA (triplexes) should be made of as many cannonical 
   nucleotide triplets as possible. The package includes visualization showing 
   the exact base-pairing in 1D, 2D or 3D.
-License: BSD
+License: BSD_2_clause + file LICENSE
 URL: http://www.fi.muni.cz/~lexa/triplex/
 biocViews: SequenceMatching, GeneRegulation
 Depends: R (>= 2.15.0), IRanges (>= 1.19.5), XVector,
   Biostrings (>= 2.29.2)
-Imports: methods, grid, Biostrings, GenomicRanges
+Imports: methods, grid, GenomicRanges
 Suggests: rgl (>= 0.93.932), BSgenome.Celegans.UCSC.ce10, rtracklayer, GenomeGraphs
 LinkingTo: IRanges, XVector, Biostrings

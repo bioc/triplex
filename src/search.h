@@ -17,8 +17,8 @@
 
 #define MAX_PIECE_SIZE (10*1024)
 
-/* Treshold ratio for triplex regions analysis start
- * was deduced empirically */
+/* Treshold ratio for triplex regions analysis start,
+ * deduced empirically */
 #define TRES_RATIO 0.93
 
 extern double LAMBDA[NUM_TRI_TYPES];
