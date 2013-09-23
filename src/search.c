@@ -27,8 +27,29 @@
 #define STAT_EXPORT   4
 
 
-double LAMBDA[NUM_TRI_TYPES] = {0.71, 0.71, 0.67, 0.67, 0.71, 0.71, 0.67, 0.67};
+/*
+Triplexfit output as reported by Matej Lexa on 2013-04-30:
+
+Ecoli_par:  mu = 7.4805, lambda = 0.8892, hits = 194641
+Ecoli_apar: mu = 7.6569, lambda = 0.8092, hits = 130954
+Human_par:  mu = 7.5835, lambda = 0.8433, hits = 145915
+Human_apar: mu = 7.9611, lambda = 0.6910, hits = 194391
+
+Sequence length: 4800000
+
+Average_par:  mu = 7.53, lambda = 0.87, hits = 170278, ratio = 0.0355
+Average_apar: mu = 7.81, lambda = 0.75, hits = 162672, ratio = 0.0339
+*/
+
+double RN[NUM_TRI_TYPES] = {0.0355, 0.0355, 0.0355, 0.0355, 0.0339, 0.0339, 0.0339, 0.0339};
+
+double MI[NUM_TRI_TYPES]     = {7.53, 7.53, 7.53, 7.53, 7.81, 7.81, 7.81, 7.81};
+double LAMBDA[NUM_TRI_TYPES] = {0.87, 0.87, 0.87, 0.87, 0.75, 0.75, 0.75, 0.75};
+
+/* Previous values:
 double MI[NUM_TRI_TYPES]     = {5.88, 5.88, 6.05, 6.05, 5.88, 5.88, 6.05, 6.05};
+double LAMBDA[NUM_TRI_TYPES] = {0.71, 0.71, 0.67, 0.67, 0.71, 0.71, 0.67, 0.67};
+*/
 const int TAB_STRAND[NUM_TRI_TYPES] = {0, 0, 1, 1, 1, 1, 0, 0};
 
 typedef enum
@@ -41,9 +62,9 @@ typedef enum
 
 
 /** Function prototypes **/
-void export_data(t_diag diag, int tri_type, int offset);
+void export_data(t_diag diag, int tri_type, int offset, int seq_len);
 void search(
-	char *piece, int piece_l, int offset, int n_antidiag, int max_bonus,
+	char *piece, int piece_l, int offset, int seq_len, int n_antidiag, int max_bonus,
 	t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb
 );
 
@@ -54,14 +75,26 @@ void print_status_array(t_diag* ptr, int size, int border);
 
 
 /**
+ * P function: P(S>=x)
+ * @param score Triplex score
+ * @param tri_type Triplex type
+ * @return P function value
+ */
+static inline double p_function(int score, int tri_type)
+{
+	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
+}
+
+/**
  * P-value
  * @param score Triplex score
  * @param tri_type Triplex type
+ * @param seq_len DNA sequence length
  * @return P-value
  */
-static inline double p_value(int score, int tri_type)
+static inline double p_value(int score, int tri_type, int seq_len)
 {
-	return 1-exp(-exp(-LAMBDA[tri_type]*(score-MI[tri_type])));
+	return 1-exp(-RN[tri_type]*seq_len*p_function(score, tri_type));
 }
 
 
@@ -83,7 +116,7 @@ void main_search(seq_t dna, intv_t *chunk, t_params *params, t_penalization *pen
 	// Maximal bonus per match
 	int max_bonus = get_max_bonus(params->tri_type, pen->iso_stay);
 	
-	min_score = get_min_score(params->p_val, params->tri_type);
+	min_score = get_min_score(params->p_val, params->tri_type, dna.len);
 	if (min_score > params->min_score)
 	// Use minimal score deduced from P-value for better performance
 		params->min_score = min_score;
@@ -150,7 +183,7 @@ void main_search(seq_t dna, intv_t *chunk, t_params *params, t_penalization *pen
 				diag[i].max_indels = 0;
 				diag[i].dp_rule = DP_MISMATCH;
 			}  
-			search(dna.seq + piece_offset, piece_l, piece_offset, n_antidiag, max_bonus, diag, params, pen, &pb);
+			search(dna.seq + piece_offset, piece_l, piece_offset, dna.len, n_antidiag, max_bonus, diag, params, pen, &pb);
 		}
 		chunk = chunk->next;
 	}
@@ -167,13 +200,14 @@ void main_search(seq_t dna, intv_t *chunk, t_params *params, t_penalization *pen
  * NOTE P-value must be monotonic decreasing function with respect to score
  * @param pvalue P-value treshold
  * @param type Triplex type
+ * @param seq_len Sequence length
  * @return Minimal score
  */
-int get_min_score(double pvalue, int type)
+int get_min_score(double pvalue, int type, int seq_len)
 {
 	int score = 1;
 	
-	while (p_value(score, type) > pvalue)
+	while (p_value(score, type, seq_len) > pvalue)
 		score++;
 	
 	return score;
@@ -185,8 +219,9 @@ int get_min_score(double pvalue, int type)
  * @param diag
  * @param tri_type
  * @param offset
+ * @param seq_len
  */
-void export_data(t_diag diag, int tri_type, int offset)
+void export_data(t_diag diag, int tri_type, int offset, int seq_len)
 {
 	int start_ch, end_ch;
 	int start_gap, end_gap;
@@ -202,7 +237,7 @@ void export_data(t_diag diag, int tri_type, int offset)
 		offset + start_ch + 1,
 		offset + end_ch + 1,
 		diag.max_score,
-		p_value(diag.max_score, tri_type),
+		p_value(diag.max_score, tri_type, seq_len),
 		diag.max_indels,
 		tri_type,
 		offset + start_gap + 1 + 1,  /* correction to loop start character */
@@ -524,6 +559,7 @@ intv_t *get_triplex_regions(
  * @param piece Given sequence
  * @param piece_l Length of given sequence
  * @param offset Offset from the real start of sequence
+ * @param seq_len Sequence length
  * @param n_antidiag Number of antidiagonals to compute
  * @param max_bonus Maximal bonus per match
  * @param diag t_diag array used to search for triplexes
@@ -532,7 +568,7 @@ intv_t *get_triplex_regions(
  * @param pb Progress bar
  */
 void search(
-	char *piece, int piece_l, int offset, int n_antidiag, int max_bonus,
+	char *piece, int piece_l, int offset, int seq_len, int n_antidiag, int max_bonus,
 	t_diag *diag, t_params *params, t_penalization *pen, prog_t *pb)
 {
 	int i, ad, d, length, treshold, d_count, d_under_tres, ad_start;
@@ -547,9 +583,7 @@ void search(
 	intv_t *triplex_regions = new_intv(0, piece_l - 1);
 	intv_t *intv = NULL;
 	
-	FILE *fd = fopen("dp_matrix_vis_nooptim.dat", "a");
-	
-	printf("n_antidiag: %d\n", n_antidiag);
+	Rprintf("Searching for triplex type %d...\n", params->tri_type);
 	
 	/* ad = antidiagonal number */
 	for (ad = ad_start; ad < n_antidiag; ad++)
@@ -568,8 +602,6 @@ void search(
 			     i <= intv->end;
 			     i++, d += 2)
 			{
-				fprintf(fd, "%d %d\n", i + offset, i-ad + offset);
-				
 				/* Max score and length calcualtion */
 				get_max_score(
 					piece[i], piece[i-ad],
@@ -591,9 +623,9 @@ void search(
 					if ((diag[d].status & STAT_MINLEN) && ((d == (ad+1)) || (d == (2*piece_l-ad-1))))
 					{
 						diag[d].status = STAT_EXPORT;
-						if (p_value(diag[d].max_score, params->tri_type) <= params->p_val)
+						if (p_value(diag[d].max_score, params->tri_type, seq_len) <= params->p_val)
 						{
-							export_data(diag[d], params->tri_type, offset);
+							export_data(diag[d], params->tri_type, offset, seq_len);
 						}
 					}
 				}
@@ -606,9 +638,9 @@ void search(
 						((diag[d].status & STAT_QUALITY)) && ((diag[d].status & STAT_MINLEN)))
 					{
 						diag[d].status = STAT_EXPORT;
-						if (p_value(diag[d].max_score, params->tri_type) <= params->p_val)
+						if (p_value(diag[d].max_score, params->tri_type, seq_len) <= params->p_val)
 						{
-							export_data(diag[d], params->tri_type, offset);
+							export_data(diag[d], params->tri_type, offset, seq_len);
 						}
 						diag[d].max_score = 0;
 					}
@@ -626,24 +658,24 @@ void search(
 		
 		tres_ratio = (double) d_under_tres / d_count;
 		
-		if (0)//tres_ratio >= TRES_RATIO)
+		if (tres_ratio >= TRES_RATIO)
 		{
 			triplex_regions = get_triplex_regions(ad, n_antidiag, diag, triplex_regions, treshold);
+#if 0
+			intv = tr;
+			d_in_regions = 0;
 			
-// 			intv = tr;
-// 			d_in_regions = 0;
-// 			
-// 			while (intv != NULL)
-// 			{
-// 				for (i = ad + intv->start; i <= intv->end; i++)
-// 					d_in_regions++;
-// 				
-// 				intv = intv->next;
-// 			}
-// 			real_ratio = (double) (d_count - d_in_regions) / d_count;
-// 			
-// 			fprintf(fd, "%d %g %g\n", ad, tres_ratio, real_ratio);
+			while (intv != NULL)
+			{
+				for (i = ad + intv->start; i <= intv->end; i++)
+					d_in_regions++;
+				
+				intv = intv->next;
+			}
+			real_ratio = (double) (d_count - d_in_regions) / d_count;
 			
+			fprintf(fd, "%d %g %g\n", ad, tres_ratio, real_ratio);
+#endif
 #ifndef NDEBUG
 			int triplex = 0;
 			for (d = ad; d <= 2*piece_l - ad; d++)
@@ -658,8 +690,6 @@ void search(
 	// Free last version of triplex regions
 	free_intv(triplex_regions);
 	
-	fclose(fd);
-	
 	if (pb->max >= PB_SHOW_LIMIT)
 	{// Redraw progress bar
 // 		ad_perc = (ad+1 - ad_start) / ad_width;
@@ -671,9 +701,9 @@ void search(
 	for (i = 1; i < (2*piece_l); i++)
 	{
 		if ((diag[i].status & STAT_QUALITY) && (diag[i].status & STAT_MINLEN))
-		{      
-			if (p_value(diag[i].max_score, params->tri_type) <= params->p_val)
-				export_data(diag[i], params->tri_type, offset);
+		{
+			if (p_value(diag[i].max_score, params->tri_type, seq_len) <= params->p_val)
+				export_data(diag[i], params->tri_type, offset, seq_len);
 		}
 	}
 }

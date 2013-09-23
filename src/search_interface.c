@@ -186,10 +186,10 @@ SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP rparams, SEXP pbw)
 	};
 	
 	// Set Lambda and Mi tables
-	LAMBDA[0] = LAMBDA[1] = LAMBDA[4] = LAMBDA[5] = p[P_LAMBDA_1];
-	LAMBDA[2] = LAMBDA[3] = LAMBDA[6] = LAMBDA[7] = p[P_LAMBDA_2];
-	MI[0] = MI[1] = MI[4] = MI[5] = p[P_MI_1];
-	MI[2] = MI[3] = MI[6] = MI[7] = p[P_MI_2];
+	LAMBDA[0] = LAMBDA[1] = LAMBDA[2] = LAMBDA[3] = p[P_LAMBDA_1];
+	LAMBDA[4] = LAMBDA[5] = LAMBDA[6] = LAMBDA[7] = p[P_LAMBDA_2];
+	MI[0] = MI[1] = MI[2] = MI[3] = p[P_MI_1];
+	MI[4] = MI[5] = MI[6] = MI[7] = p[P_MI_2];
 	
 	int *t = INTEGER(type);
 	seq_t dna = decode_DNAString(dnaobject);

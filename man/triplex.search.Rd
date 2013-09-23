@@ -12,10 +12,10 @@ triplex-forming sequences in DNA.
 triplex.search(
   dna, 
   type       = 0:7,
-  min_score  = 3,
-  p_value    = 0.05,
+  min_score  = 10,
+  p_value    = 1,
   min_len    = 6,
-  max_len    = 10,
+  max_len    = 25,
   min_loop   = 3,
   max_loop   = 10,
   lambda_1   = 0.67,
@@ -55,16 +55,16 @@ triplex.search(
     Maximal triplex loop length.
   }
   \item{lambda_1}{
-    Lambda for triplex types 0,1,4,5.
+    Lambda for parallel triplex types 0,1,2,3.
   }
   \item{lambda_2}{
-    Lambda for triplex types 2,3,6,7.
+    Lambda for antiparallel triplex types 4,5,6,7.
   }
   \item{mi_1}{
-    Mi for triplex types 0,1,4,5.
+    Mi for parallel triplex types 0,1,2,3.
   }
   \item{mi_2}{
-    Mi for triplex types 2,3,6,7.
+    Mi for antiparallel triplex types 4,5,6,7.
   }
   \item{dtwist_pen}{
     Dtwist penalization.

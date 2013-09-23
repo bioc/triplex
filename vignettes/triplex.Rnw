@@ -501,6 +501,52 @@ gdPlot(list(fwd = genesplus, GENES = genomeAxis, rev = genesminus,
 
 \end{enumerate}
 
+
+\section{P-value calculation}
+\label{sec:pvalue}
+ 
+While calculating the scores of individual triplexes is
+straightforward with given scoring matrices and
+penalty scores, calculating reasonable P-values of these scores
+is a challenging task.
+ 
+The P-values describe the probability of obtaining the reported
+scores by chance. To estimate it, we use a randomized genomic sequence.
+Because of the strikingly different nucleotide and H-DNA content
+of prokaryotic and eukaryotic sequences, we use E.coli genome and
+a segment of human chromosome 5 as models. The calculation of P-value
+follows the approach of \cite{Eddy1997}. We used the
+ExtremeValueFitHistogram() function from hmmer-2.4 to fit the values
+of $\lambda$ and $\mu$ in the equation:
+
+\begin{equation}
+\textit{P-value}(x) = 1 - e^{-n P(S \geq x)}
+\end{equation}
+
+where
+
+\begin{equation}
+P(S \geq x) = 1-e^{-e^{-\lambda(x - \mu)}}
+\end{equation}
+
+The problematic part here is the determination of $n$. Because we search
+a single long sequence, but usually report multiple hits, the value of $n$
+can only be estimated. It must take into account the internal filtering
+of hits by \emph{triplex} and the filtering property of the DP algorithm
+itself. We counted all the hits returned when fitting the EVD to a genome
+of size 4.8Mbp, to find an apparent value of n:
+
+\begin{equation}
+n(4.8Mbp) = 170000
+\end{equation}
+
+This leads to a reported hit every 30bp, or a ratio of $n$ to sequence length:
+
+\begin{equation}
+rn = \frac{170000}{4800000} = 0.035
+\end{equation}
+
+
 \begin{thebibliography}{9}
 
 \bibitem{Lexa2011}
@@ -512,6 +558,11 @@ gdPlot(list(fwd = genesplus, GENES = genomeAxis, rev = genesminus,
 \bibitem{Rajdl12}
    Rajdl, K.  \emph{Funkce pro manipulaci a vizualizaci molekul\'{a}rn\'{i}ch
    dat v prost\v{r}ed\'{i} R} [online].
+
+\bibitem{Eddy1997}
+   Eddy, S. R. \emph{Maximum likelihood fitting of extreme
+   value distributions.} 1997. Unpublished technical notes. Available at
+   http://www.genetics.wustl.edu/eddy/publications/
 
 \end{thebibliography}
 
