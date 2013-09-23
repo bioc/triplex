@@ -27,29 +27,10 @@
 #define STAT_EXPORT   4
 
 
-/*
-Triplexfit output as reported by Matej Lexa on 2013-04-30:
+double RN[NUM_TRI_TYPES];
+double MI[NUM_TRI_TYPES];
+double LAMBDA[NUM_TRI_TYPES];
 
-Ecoli_par:  mu = 7.4805, lambda = 0.8892, hits = 194641
-Ecoli_apar: mu = 7.6569, lambda = 0.8092, hits = 130954
-Human_par:  mu = 7.5835, lambda = 0.8433, hits = 145915
-Human_apar: mu = 7.9611, lambda = 0.6910, hits = 194391
-
-Sequence length: 4800000
-
-Average_par:  mu = 7.53, lambda = 0.87, hits = 170278, ratio = 0.0355
-Average_apar: mu = 7.81, lambda = 0.75, hits = 162672, ratio = 0.0339
-*/
-
-double RN[NUM_TRI_TYPES] = {0.0355, 0.0355, 0.0355, 0.0355, 0.0339, 0.0339, 0.0339, 0.0339};
-
-double MI[NUM_TRI_TYPES]     = {7.53, 7.53, 7.53, 7.53, 7.81, 7.81, 7.81, 7.81};
-double LAMBDA[NUM_TRI_TYPES] = {0.87, 0.87, 0.87, 0.87, 0.75, 0.75, 0.75, 0.75};
-
-/* Previous values:
-double MI[NUM_TRI_TYPES]     = {5.88, 5.88, 6.05, 6.05, 5.88, 5.88, 6.05, 6.05};
-double LAMBDA[NUM_TRI_TYPES] = {0.71, 0.71, 0.67, 0.67, 0.71, 0.71, 0.67, 0.67};
-*/
 const int TAB_STRAND[NUM_TRI_TYPES] = {0, 0, 1, 1, 1, 1, 0, 0};
 
 typedef enum
