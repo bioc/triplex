@@ -50,6 +50,6 @@ T_STRAND   = 9
 ###
 ## Prokaryotic vs. eukaryotic
 ##
-S_AUTO = 0
-S_PROKARYOTIC = 1
-S_EUKARYOTIC = 2
+ST_PROKARYOTIC = 0
+ST_EUKARYOTIC  = 1
+ST_AUTOMATIC   = 2

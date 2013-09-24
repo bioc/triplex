@@ -16,8 +16,6 @@
 #include <ctype.h>
 #include "libtriplex.h"
 
-#define ASCII_LOW 128
-#define NBASES 4
 
 /* Translation table from ascii symbols to
  * internal representation of DNA bases */
@@ -428,6 +426,7 @@ void init_CHAR2NUKL_table()
  * Encode bases to enum values A,C,G,T
  * @param seq DNA sequence
  */
+#if 0
 void encode_bases(seq_t dna)
 {
 	char ch;
@@ -440,7 +439,7 @@ void encode_bases(seq_t dna)
 			dna.seq[i] = ch;
 	}
 }
-
+#endif
 
 /**
  * Get chunk intervals without N or - symbols

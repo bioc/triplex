@@ -20,6 +20,7 @@
 // #define NDEBUG
 
 #define NUM_TRI_TYPES   8
+#define NUM_SEQ_TYPES   2
 
 /* DP rule constants */
 #define DP_MATCH        0
@@ -30,12 +31,22 @@
 #define DP_NONE         5
 #define DP_MAIN_ADIAG   6
 
+#define ASCII_LOW 128
+#define NBASES 4
+
 #define A 0
 #define C 1
 #define G 2
 #define T 3
 
 #define INVALID_CHAR -1
+
+typedef enum
+{// Enumeration for sequence types
+	ST_PR = 0,
+	ST_EU,
+	ST_AU
+} seqtype_t;
 
 typedef struct
 {// DP matrix position represented as diagonal and antidiagonal
@@ -86,6 +97,7 @@ typedef struct
 {// Structure for decoded sequence
 	char *seq;
 	int len;
+	int type;
 } seq_t;
 
 extern char CHAR2NUKL[];

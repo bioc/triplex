@@ -26,10 +26,18 @@ typedef enum
 	P_MAX_LEN,
 	P_MIN_LOOP,
 	P_MAX_LOOP,
-	P_LAMBDA_1,
-	P_LAMBDA_2,
-	P_MI_1,
-	P_MI_2,
+	P_LAMBDA_1_P,
+	P_LAMBDA_1_E,
+	P_LAMBDA_2_P,
+	P_LAMBDA_2_E,
+	P_MI_1_P,
+	P_MI_1_E,
+	P_MI_2_P,
+	P_MI_2_E,
+	P_RN_1_P,
+	P_RN_1_E,
+	P_RN_2_P,
+	P_RN_2_E,
 	P_DTWIST_PEN,
 	P_INS_PEN,
 	P_ISO_PEN,
@@ -38,8 +46,8 @@ typedef enum
 } rparams_t;
 
 
-SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP params, SEXP pbw);
-seq_t decode_DNAString(SEXP dnaobject);
+SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP seq_type, SEXP params, SEXP pbw);
+seq_t decode_DNAString(SEXP dnaobject, int seq_type);
 void save_result(
 	int start, int end,    int score, double pvalue, int insdel,
 	int type,  int lstart, int lend, int strand

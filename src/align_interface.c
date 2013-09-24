@@ -60,13 +60,8 @@ SEXP triplex_align(SEXP seq, SEXP type, SEXP rparams)
 		.iso_stay = p[P_ISO_BONUS],
 		.mismatch = p[P_MIS_PEN] 
 	};
-	// Set Lambda and Mi tables
-	LAMBDA[0] = LAMBDA[1] = LAMBDA[4] = LAMBDA[5] = p[P_LAMBDA_1];
-	LAMBDA[2] = LAMBDA[3] = LAMBDA[6] = LAMBDA[7] = p[P_LAMBDA_2];
-	MI[0] = MI[1] = MI[4] = MI[5] = p[P_MI_1];
-	MI[2] = MI[3] = MI[6] = MI[7] = p[P_MI_2];
 	
-	seq_t dna = decode_DNAString(seq);
+	seq_t dna = decode_DNAString(seq, ST_AU);
 	
 	// Ininitalize global alignment string
 	tx_align.len = 2 * dna.len;

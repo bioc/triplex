@@ -29,9 +29,10 @@ int act_dl_list;
  * Decode DNAString object
  * @see IRanges_interface, Biostrings_interface
  * @param dnaobject DNAString object
+ * @param seq_type Sequence type
  * @return Decoded sequence structure
  */
-seq_t decode_DNAString(SEXP dnaobject)
+seq_t decode_DNAString(SEXP dnaobject, int seq_type)
 {
 	// Extract char sequence from R object
 	cachedCharSeq x = cache_XRaw(dnaobject);
@@ -42,11 +43,38 @@ seq_t decode_DNAString(SEXP dnaobject)
 	if (dna.seq == NULL)
 		error("Failed to allocate memory for decoded DNA string.");
 	
-	int i;
+	double stat[NBASES];
+	for (int j = 0; j < NBASES; j++)
+	// Initialize statistics
+		stat[j] = 0;
+	
+	int i; char ch;
+	
 	for (i = 0; i < dna.len; i++)
-		dna.seq[i] = tolower(DNAdecode(x.seq[i]));
+	{
+		ch = CHAR2NUKL[tolower(DNAdecode(x.seq[i]))];
+		if (ch == INVALID_CHAR)
+		{
+			free(dna.seq);
+			error("Unsupported symbol '%c' in input sequence.", dna.seq[i]);
+		}
+		else
+		{
+			dna.seq[i] = ch;
+			if (ch < NBASES) stat[ch]++;
+		}
+	}
 	
 	dna.seq[i] = '\0';
+	dna.type = ST_PR;
+	
+	for (int j = 0; j < NBASES; j++)
+	// Normalize statistics
+		stat[j] = stat[j] / dna.len;
+	
+	Rprintf("seq_type = %d\n", seq_type);
+	Rprintf("stat = %g %g %g %g\n", stat[A], stat[C], stat[G], stat[T]);
+	
 	return dna;
 }
 
@@ -159,7 +187,7 @@ void save_result(
  * @param pbw       Progress bar width
  * @return List
  */
-SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP rparams, SEXP pbw)
+SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP seq_type, SEXP rparams, SEXP pbw)
 {
    SEXP list;
 	
@@ -185,15 +213,26 @@ SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP rparams, SEXP pbw)
 		.mismatch = p[P_MIS_PEN]
 	};
 	
-	// Set Lambda and Mi tables
-	LAMBDA[0] = LAMBDA[1] = LAMBDA[2] = LAMBDA[3] = p[P_LAMBDA_1];
-	LAMBDA[4] = LAMBDA[5] = LAMBDA[6] = LAMBDA[7] = p[P_LAMBDA_2];
-	MI[0] = MI[1] = MI[2] = MI[3] = p[P_MI_1];
-	MI[4] = MI[5] = MI[6] = MI[7] = p[P_MI_2];
+	// Set Lambda, Mu and Rn tables
+	LAMBDA[ST_PR][0] = LAMBDA[ST_PR][1] = LAMBDA[ST_PR][2] = LAMBDA[ST_PR][3] = p[P_LAMBDA_1_P];
+	LAMBDA[ST_PR][4] = LAMBDA[ST_PR][5] = LAMBDA[ST_PR][6] = LAMBDA[ST_PR][7] = p[P_LAMBDA_2_P];
+	LAMBDA[ST_EU][0] = LAMBDA[ST_EU][1] = LAMBDA[ST_EU][2] = LAMBDA[ST_EU][3] = p[P_LAMBDA_1_E];
+	LAMBDA[ST_EU][4] = LAMBDA[ST_EU][5] = LAMBDA[ST_EU][6] = LAMBDA[ST_EU][7] = p[P_LAMBDA_2_E];
+	
+	MI[ST_PR][0] = MI[ST_PR][1] = MI[ST_PR][2] = MI[ST_PR][3] = p[P_MI_1_P];
+	MI[ST_PR][4] = MI[ST_PR][5] = MI[ST_PR][6] = MI[ST_PR][7] = p[P_MI_2_P];
+	MI[ST_EU][0] = MI[ST_EU][1] = MI[ST_EU][2] = MI[ST_EU][3] = p[P_MI_1_E];
+	MI[ST_EU][4] = MI[ST_EU][5] = MI[ST_EU][6] = MI[ST_EU][7] = p[P_MI_2_E];
+	
+	RN[ST_PR][0] = RN[ST_PR][1] = RN[ST_PR][2] = RN[ST_PR][3] = p[P_RN_1_P];
+	RN[ST_PR][4] = RN[ST_PR][5] = RN[ST_PR][6] = RN[ST_PR][7] = p[P_RN_2_P];
+	RN[ST_EU][0] = RN[ST_EU][1] = RN[ST_EU][2] = RN[ST_EU][3] = p[P_RN_1_E];
+	RN[ST_EU][4] = RN[ST_EU][5] = RN[ST_EU][6] = RN[ST_EU][7] = p[P_RN_2_E];
+	
+	int *st = INTEGER(seq_type);
 	
 	int *t = INTEGER(type);
-	seq_t dna = decode_DNAString(dnaobject);
-	encode_bases(dna);
+	seq_t dna = decode_DNAString(dnaobject, st[0]);
 	intv_t *chunk = get_chunks(dna);
 	
 	for (int i = 0; i < NUM_TRI_TYPES; i++)

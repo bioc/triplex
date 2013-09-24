@@ -81,7 +81,7 @@ triplex.search <- function(
 	ins_pen    = 'default', #9,
 	iso_pen    = 'default', #5,
 	iso_bonus  = 'default', #0,
-	mis_pen    = 'default', #7)
+	mis_pen    = 'default') #7)
 {
 	if (class(dna) != "DNAString")
 		stop("Input sequence must be DNAString object.")
@@ -114,24 +114,25 @@ triplex.search <- function(
 	
 	# Validate sequence type option
 	if (seq_type == 'auto')
-		seq_type = S_AUTO
+		seq_type = ST_AUTOMATIC
 	else if (seq_type == 'prokaryotic')
-		seq_type = S_PROKARYOTIC
+		seq_type = ST_PROKARYOTIC
 	else if (seq_type == 'eukaryotic')
-		seq_type = S_EUKARYOTIC
+		seq_type = ST_EUKARYOTIC
 	else
-		error("Invalid sequence type. Valid options: auto, prokaryotic, eukaryotic")
+		error("Invalid sequence type. Valid options are: auto, prokaryotic, eukaryotic")
 	
-	# Set default P-value constants
-	#
-	# Triplexfit output as reported by Matej Lexa on 2013-04-30:
-	#
-	# Sequence length: 4800000
-	#
-	# Ecoli_par:  mu = 7.4805, lambda = 0.8892, hits = 194641, rn = 0.0406
-	# Ecoli_apar: mu = 7.6569, lambda = 0.8092, hits = 130954, rn = 0.0273
-	# Human_par:  mu = 7.5835, lambda = 0.8433, hits = 145915, rn = 0.0304
-	# Human_apar: mu = 7.9611, lambda = 0.6910, hits = 194391, rn = 0.0405
+	###
+	## Set default P-value constants
+	##
+	## Triplexfit output as reported by Matej Lexa on 2013-04-30:
+	##
+	## Sequence length: 4800000
+	##
+	## Ecoli_par:  mu = 7.4805, lambda = 0.8892, hits = 194641, rn = 0.0406
+	## Ecoli_apar: mu = 7.6569, lambda = 0.8092, hits = 130954, rn = 0.0273
+	## Human_par:  mu = 7.5835, lambda = 0.8433, hits = 145915, rn = 0.0304
+	## Human_apar: mu = 7.9611, lambda = 0.6910, hits = 194391, rn = 0.0405
 	
 	lambda_1 = pconst_set(lambda_1, 0.8892, 0.8433)
 	lambda_2 = pconst_set(lambda_2, 0.8092, 0.6910)
@@ -148,10 +149,18 @@ triplex.search <- function(
 	p[MAX_LEN]    = to_double(max_len)
 	p[MIN_LOOP]   = to_double(min_loop)
 	p[MAX_LOOP]   = to_double(max_loop)
-	p[LAMBDA_1]   = to_double(lambda_1)
-	p[LAMBDA_2]   = to_double(lambda_2)
-	p[MI_1]       = to_double(mi_1)
-	p[MI_2]       = to_double(mi_2)
+	p[LAMBDA_1_P] = to_double(lambda_1[1])
+	p[LAMBDA_1_E] = to_double(lambda_1[2])
+	p[LAMBDA_2_P] = to_double(lambda_2[1])
+	p[LAMBDA_2_E] = to_double(lambda_2[2])
+	p[MI_1_P]     = to_double(mi_1[1])
+	p[MI_1_E]     = to_double(mi_1[2])
+	p[MI_2_P]     = to_double(mi_2[1])
+	p[MI_2_E]     = to_double(mi_2[2])
+	p[RN_1_P]     = to_double(rn_1[1])
+	p[RN_1_E]     = to_double(rn_1[2])
+	p[RN_2_P]     = to_double(rn_2[1])
+	p[RN_2_E]     = to_double(rn_2[2])
 	p[DTWIST_PEN] = to_double(dtwist_pen)
 	p[INS_PEN]    = to_double(ins_pen)
 	p[ISO_PEN]    = to_double(iso_pen)
@@ -160,7 +169,7 @@ triplex.search <- function(
 	
 	type <- validate_type(type)
 	
-	txs <- .Call("triplex_search", dna, type, p, as.integer(getOption("width")))
+	txs <- .Call("triplex_search", dna, type, as.integer(seq_type), p, as.integer(getOption("width")))
 	
 	strand <- txs[[T_STRAND]]
 	s <- character()

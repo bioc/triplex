@@ -43,11 +43,8 @@ char rule(int r);
  * @param pen    Custom penalizations
  */
 void main_align(seq_t dna, t_params params, t_penalization pen)
-{      
+{
 	int i, verbose_flag = 0;
-	
-	/* Translation from a, c, g, t to 0, 1, 2, 3 */     
-	encode_bases(dna);
 	
 	/* Diag structure array alocation */
 	t_diag *diag = malloc(2*dna.len * sizeof(t_diag));
