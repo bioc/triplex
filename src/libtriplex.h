@@ -45,7 +45,7 @@ typedef enum
 {// Enumeration for sequence types
 	ST_PR = 0,
 	ST_EU,
-	ST_AU
+	ST_AU // Not supported yet
 } seqtype_t;
 
 typedef struct

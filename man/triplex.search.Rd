@@ -11,22 +11,25 @@ triplex-forming sequences in DNA.
 \usage{
 triplex.search(
   dna, 
-  type       = 0:7,
-  min_score  = 10,
-  p_value    = 1,
-  min_len    = 6,
-  max_len    = 25,
-  min_loop   = 3,
-  max_loop   = 10,
-  lambda_1   = 0.67,
-  lambda_2   = 0.71,
-  mi_1       = 6.05,
-  mi_2       = 5.88,
-  dtwist_pen = 7,
-  ins_pen    = 9,
-  iso_pen    = 5,
-  iso_bonus  = 0,
-  mis_pen    = 7)
+  type        = 0:7,
+  min_score   = 10,
+  p_value     = 1,
+  min_len     = 6,
+  max_len     = 25,
+  min_loop    = 3,
+  max_loop    = 10,
+  seq_type    = 'eukaryotic',
+  lambda_par  = 'default',
+  lambda_apar = 'default',
+  mu_par      = 'default',
+  mu_apar     = 'default',
+  rn_par      = 'default'
+  rn_apar     = 'default'
+  dtwist_pen  = 'default',
+  ins_pen     = 'default',
+  iso_pen     = 'default',
+  iso_bonus   = 'default',
+  mis_pen     = 'default')
 }
 
 \arguments{
@@ -54,33 +57,62 @@ triplex.search(
   \item{max_loop}{
     Maximal triplex loop length.
   }
-  \item{lambda_1}{
-    Lambda for parallel triplex types 0,1,2,3.
+  \item{seq_type}{
+    Type of input sequence. Possible options: prokaryotic, eukaryotic.
   }
-  \item{lambda_2}{
-    Lambda for antiparallel triplex types 4,5,6,7.
+  \item{lambda_par}{
+    Lambda for parallel triplex types 0,1,2,3. Default for prokaryotic
+    sequence is 0.8892, for eukaryotic 0.8433.
   }
-  \item{mi_1}{
-    Mi for parallel triplex types 0,1,2,3.
+  \item{lambda_apar}{
+    Lambda for antiparallel triplex types 4,5,6,7. Default for prokaryotic
+    sequence is 0.8092, for eukaryotic 0.6910.
   }
-  \item{mi_2}{
-    Mi for antiparallel triplex types 4,5,6,7.
+  \item{mu_par}{
+    Mu for parallel triplex types 0,1,2,3. Default for prokaryotic
+    sequence is 7.4805, for eukaryotic 0.8433.
+  }
+  \item{mu_apar}{
+    Mu for antiparallel triplex types 4,5,6,7. Default for prokaryotic
+    sequence is 7.6569, for eukaryotic 7.9611.
+  }
+  \item{rn_par}{
+    Hit ratio (reported hits to sequence length) for parallel triplex
+    types 0,1,2,3.
+    
+    Default for prokaryotic sequence is 0.0406, for eukaryotic 0.0304.
+  }
+  \item{rn_apar}{
+    Hit ratio (reported hits to sequence length) for antiparallel triplex
+    types 4,5,6,7.
+    
+    Default for prokaryotic sequence is 0.0273, for eukaryotic 0.0405.
   }
   \item{dtwist_pen}{
-    Dtwist penalization.
+    Dtwist penalization, default is 7.
   }
   \item{ins_pen}{
-    Insertion penalization.
+    Insertion penalization, default is 9.
   }
   \item{iso_pen}{
-    Isomorphic group change penalization.
+    Isomorphic group change penalization, default is 5.
   }
   \item{iso_bonus}{
-    Isomorphic group stay bonus.
+    Isomorphic group stay bonus, default is 0.
   }
   \item{mis_pen}{
-    Mismatch penalization.
+    Mismatch penalization, default is 7.
   }
+}
+
+
+\note{
+
+If you change the penalization options (\code{dtwist_pen}, \code{ins_pen},
+\code{iso_pen}, \code{iso_bonus}, \code{mis_pen}) or scoring tables,
+you should consider recalculation of P-value constants (\code{lambda},
+\code{mu} and \code{rn}).
+
 }
 
 \details{

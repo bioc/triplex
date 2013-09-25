@@ -43,11 +43,6 @@ seq_t decode_DNAString(SEXP dnaobject, int seq_type)
 	if (dna.seq == NULL)
 		error("Failed to allocate memory for decoded DNA string.");
 	
-	double stat[NBASES];
-	for (int j = 0; j < NBASES; j++)
-	// Initialize statistics
-		stat[j] = 0;
-	
 	int i; char ch;
 	
 	for (i = 0; i < dna.len; i++)
@@ -61,19 +56,11 @@ seq_t decode_DNAString(SEXP dnaobject, int seq_type)
 		else
 		{
 			dna.seq[i] = ch;
-			if (ch < NBASES) stat[ch]++;
 		}
 	}
 	
 	dna.seq[i] = '\0';
-	dna.type = ST_PR;
-	
-	for (int j = 0; j < NBASES; j++)
-	// Normalize statistics
-		stat[j] = stat[j] / dna.len;
-	
-	Rprintf("seq_type = %d\n", seq_type);
-	Rprintf("stat = %g %g %g %g\n", stat[A], stat[C], stat[G], stat[T]);
+	dna.type = seq_type;
 	
 	return dna;
 }
@@ -84,7 +71,7 @@ seq_t decode_DNAString(SEXP dnaobject, int seq_type)
  * @param list List object
  * @param idx  Element index
  * @param type Vector type
- * @param len  Vector length
+ * @param len Vector length
  * @return Vector object
  */
 SEXP create_list_elt(SEXP list, int idx, SEXPTYPE type, int len)
@@ -214,24 +201,24 @@ SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP seq_type, SEXP rparams, SEXP
 	};
 	
 	// Set Lambda, Mu and Rn tables
-	LAMBDA[ST_PR][0] = LAMBDA[ST_PR][1] = LAMBDA[ST_PR][2] = LAMBDA[ST_PR][3] = p[P_LAMBDA_1_P];
-	LAMBDA[ST_PR][4] = LAMBDA[ST_PR][5] = LAMBDA[ST_PR][6] = LAMBDA[ST_PR][7] = p[P_LAMBDA_2_P];
-	LAMBDA[ST_EU][0] = LAMBDA[ST_EU][1] = LAMBDA[ST_EU][2] = LAMBDA[ST_EU][3] = p[P_LAMBDA_1_E];
-	LAMBDA[ST_EU][4] = LAMBDA[ST_EU][5] = LAMBDA[ST_EU][6] = LAMBDA[ST_EU][7] = p[P_LAMBDA_2_E];
+	LAMBDA[ST_PR][0] = LAMBDA[ST_PR][1] = LAMBDA[ST_PR][2] = LAMBDA[ST_PR][3] = p[P_LAMBDA_PAR_P];
+	LAMBDA[ST_PR][4] = LAMBDA[ST_PR][5] = LAMBDA[ST_PR][6] = LAMBDA[ST_PR][7] = p[P_LAMBDA_APAR_P];
+	LAMBDA[ST_EU][0] = LAMBDA[ST_EU][1] = LAMBDA[ST_EU][2] = LAMBDA[ST_EU][3] = p[P_LAMBDA_PAR_E];
+	LAMBDA[ST_EU][4] = LAMBDA[ST_EU][5] = LAMBDA[ST_EU][6] = LAMBDA[ST_EU][7] = p[P_LAMBDA_APAR_E];
 	
-	MI[ST_PR][0] = MI[ST_PR][1] = MI[ST_PR][2] = MI[ST_PR][3] = p[P_MI_1_P];
-	MI[ST_PR][4] = MI[ST_PR][5] = MI[ST_PR][6] = MI[ST_PR][7] = p[P_MI_2_P];
-	MI[ST_EU][0] = MI[ST_EU][1] = MI[ST_EU][2] = MI[ST_EU][3] = p[P_MI_1_E];
-	MI[ST_EU][4] = MI[ST_EU][5] = MI[ST_EU][6] = MI[ST_EU][7] = p[P_MI_2_E];
+	MI[ST_PR][0] = MI[ST_PR][1] = MI[ST_PR][2] = MI[ST_PR][3] = p[P_MI_PAR_P];
+	MI[ST_PR][4] = MI[ST_PR][5] = MI[ST_PR][6] = MI[ST_PR][7] = p[P_MI_APAR_P];
+	MI[ST_EU][0] = MI[ST_EU][1] = MI[ST_EU][2] = MI[ST_EU][3] = p[P_MI_PAR_E];
+	MI[ST_EU][4] = MI[ST_EU][5] = MI[ST_EU][6] = MI[ST_EU][7] = p[P_MI_APAR_E];
 	
-	RN[ST_PR][0] = RN[ST_PR][1] = RN[ST_PR][2] = RN[ST_PR][3] = p[P_RN_1_P];
-	RN[ST_PR][4] = RN[ST_PR][5] = RN[ST_PR][6] = RN[ST_PR][7] = p[P_RN_2_P];
-	RN[ST_EU][0] = RN[ST_EU][1] = RN[ST_EU][2] = RN[ST_EU][3] = p[P_RN_1_E];
-	RN[ST_EU][4] = RN[ST_EU][5] = RN[ST_EU][6] = RN[ST_EU][7] = p[P_RN_2_E];
+	RN[ST_PR][0] = RN[ST_PR][1] = RN[ST_PR][2] = RN[ST_PR][3] = p[P_RN_PAR_P];
+	RN[ST_PR][4] = RN[ST_PR][5] = RN[ST_PR][6] = RN[ST_PR][7] = p[P_RN_APAR_P];
+	RN[ST_EU][0] = RN[ST_EU][1] = RN[ST_EU][2] = RN[ST_EU][3] = p[P_RN_PAR_E];
+	RN[ST_EU][4] = RN[ST_EU][5] = RN[ST_EU][6] = RN[ST_EU][7] = p[P_RN_APAR_E];
 	
 	int *st = INTEGER(seq_type);
-	
 	int *t = INTEGER(type);
+	
 	seq_t dna = decode_DNAString(dnaobject, st[0]);
 	intv_t *chunk = get_chunks(dna);
 	

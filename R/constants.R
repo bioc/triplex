@@ -10,29 +10,29 @@
 ## Parameter positions in parameter array
 ## for passing from/to C function
 ##
-MIN_SCORE  = 1
-P_VALUE    = 2
-MIN_LEN    = 3
-MAX_LEN    = 4
-MIN_LOOP   = 5
-MAX_LOOP   = 6
-LAMBDA_1_P = 7
-LAMBDA_1_E = 8
-LAMBDA_2_P = 9
-LAMBDA_2_E = 10
-MI_1_P     = 11
-MI_1_E     = 12
-MI_2_P     = 13
-MI_2_E     = 14
-RN_1_P     = 15
-RN_1_E     = 16
-RN_2_P     = 17
-RN_2_E     = 18
-DTWIST_PEN = 19
-INS_PEN    = 20
-ISO_PEN    = 21
-ISO_BONUS  = 22
-MIS_PEN    = 23
+MIN_SCORE     = 1
+P_VALUE       = 2
+MIN_LEN       = 3
+MAX_LEN       = 4
+MIN_LOOP      = 5
+MAX_LOOP      = 6
+LAMBDA_PAR_P  = 7
+LAMBDA_PAR_E  = 8
+LAMBDA_APAR_P = 9
+LAMBDA_APAR_E = 10
+MU_PAR_P      = 11
+MU_PAR_E      = 12
+MU_APAR_P     = 13
+MU_APAR_E     = 14
+RN_PAR_P      = 15
+RN_PAR_E      = 16
+RN_APAR_P     = 17
+RN_APAR_E     = 18
+DTWIST_PEN    = 19
+INS_PEN       = 20
+ISO_PEN       = 21
+ISO_BONUS     = 22
+MIS_PEN       = 23
 
 ###
 ## Positions in result list from C
@@ -52,4 +52,4 @@ T_STRAND   = 9
 ##
 ST_PROKARYOTIC = 0
 ST_EUKARYOTIC  = 1
-ST_AUTOMATIC   = 2
+ST_AUTOMATIC   = 2 # Not supported yet
