@@ -58,7 +58,7 @@ pen_set <- function(value, default)
 	if (value == 'default')
 		return(default)
 	else
-		retrun(value)
+		return(value)
 }
 
 ###
