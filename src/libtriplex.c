@@ -29,6 +29,14 @@ const char NUKL2CHAR[NBASES] =
 	[G] = 'g', [T] = 't'
 };
 
+/* Translation table from internal representation
+ * of DNA bases to complement DNA bases */
+const int COMP[NBASES] =
+{
+	[A] = T, [C] = G,
+	[G] = C, [T] = A 
+};
+
 /* Table indicating which symbols should be cut off
  * from input DNA sequence, especially IUPAC symbols */
 const int CHUNKCHAR[ASCII_LOW] =

@@ -29,13 +29,64 @@ int act_dl_list;
 /**
  * Fill other scoring and group tables
  */
-void tables_fill(int score[NBASES][NBASES], int group[NBASES][NBASES])
+void tables_fill(int score_par[NBASES][NBASES], int group_par[NBASES][NBASES],
+                 int score_apar[NBASES][NBASES], int group_apar[NBASES][NBASES])
 {
-	/* i.e.
-	tab_score[1][A][T] = score[A][A];
-	tab_bound[1][A][T] = group[0][A][A];
-	*/
-	
+   /* Type 0 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[0][i][j] = score_par[i][COMP[j]];
+	      tab_bound[0][i][j] = group_par[i][COMP[j]];
+      }
+
+   /* Type 1 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[1][i][j] = score_par[j][COMP[i]];
+	      tab_bound[1][i][j] = group_par[j][COMP[i]];
+      }
+
+   /* Type 2 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[2][i][j] = score_par[COMP[i]][j];
+	      tab_bound[2][i][j] = group_par[COMP[i]][j];
+      }
+
+   /* Type 3 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[3][i][j] = score_par[COMP[j]][COMP[i]];
+	      tab_bound[3][i][j] = group_par[COMP[j]][COMP[i]];
+      }
+
+   /* Type 4 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[4][i][j] = score_apar[COMP[i]][COMP[j]];
+	      tab_bound[4][i][j] = group_apar[COMP[i]][COMP[j]];
+      }
+
+   /* Type 5 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[5][i][j] = score_apar[COMP[j]][COMP[i]];
+	      tab_bound[5][i][j] = group_apar[COMP[j]][COMP[i]];
+      }
+
+   /* Type 6 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[6][i][j] = score_apar[i][j];
+	      tab_bound[6][i][j] = group_apar[i][j];
+      }
+
+   /* Type 7 */
+   for(i=0;i<NBASES;i++)
+      for(j=0;j<NBASES;j++) {
+	      tab_score[7][i][j] = score_apar[i][j];
+	      tab_bound[7][i][j] = group_apar[j][i];
+      }
 }
 
 

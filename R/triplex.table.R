@@ -16,19 +16,19 @@ triplex.score.table <- function()
 	mx <- matrix(TM, NBASES, NBASES, dimnames=list(names, names))
 	tb <- list(par=mx, apar=mx)
 	
-	tb$par[T,T] <- TS
-	tb$par[T,C] <- TW
-	tb$par[C,C] <- TS
-	tb$par[G,C] <- TW
-	tb$par[G,A] <- TS
+	tb$par[T,A] <- TS
 	tb$par[T,G] <- TW
+	tb$par[C,G] <- TS
+	tb$par[G,G] <- TW
+	tb$par[G,T] <- TS
+	tb$par[T,C] <- TW
 	
-	tb$apar[A,T] <- TS
-	tb$apar[A,C] <- TW
-	tb$apar[T,T] <- TS
-	tb$apar[T,G] <- TW
-	tb$apar[C,T] <- TW
-	tb$apar[G,C] <- TS
+	tb$apar[A,A] <- TS
+	tb$apar[A,G] <- TW
+	tb$apar[T,A] <- TS
+	tb$apar[T,C] <- TW
+	tb$apar[C,A] <- TW
+	tb$apar[G,G] <- TS
 	
 	return(tb)
 }
@@ -42,19 +42,19 @@ triplex.group.table <- function()
 	mx <- matrix(IN, NBASES, NBASES, dimnames=list(names, names))
 	tb <- list(par=mx, apar=mx)
 	
-	tb$par[T,T] <- IA
-	tb$par[T,C] <- IA
-	tb$par[C,C] <- IA
-	tb$par[G,C] <- IB
-	tb$par[G,A] <- IB
-	tb$par[T,G] <- IB
+	tb$par[T,A] <- IA
+	tb$par[T,G] <- IA
+	tb$par[C,G] <- IA
+	tb$par[G,G] <- IB
+	tb$par[G,T] <- IB
+	tb$par[T,C] <- IB
 	
-	tb$apar[A,T] <- IC
-	tb$apar[A,C] <- ID
-	tb$apar[T,T] <- IC
-	tb$apar[T,G] <- IE
-	tb$apar[C,T] <- ID
-	tb$apar[G,C] <- IE
+	tb$apar[A,A] <- IC
+	tb$apar[A,G] <- ID
+	tb$apar[T,A] <- IC
+	tb$apar[T,C] <- IE
+	tb$apar[C,A] <- ID
+	tb$apar[G,G] <- IE
 	
 	return(tb)
 }
