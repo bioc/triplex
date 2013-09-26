@@ -19,6 +19,8 @@ triplex.search(
   min_loop    = 3,
   max_loop    = 10,
   seq_type    = 'eukaryotic',
+  score_table = 'default',
+  group_table = 'default',
   lambda_par  = 'default',
   lambda_apar = 'default',
   mu_par      = 'default',
@@ -59,6 +61,12 @@ triplex.search(
   }
   \item{seq_type}{
     Type of input sequence. Possible options: prokaryotic, eukaryotic.
+  }
+  \item{score_table}{
+    Scoring table for parallel and antiparallel triplex types. Default
+    is the same as \link{\code{triplex.score.table}} output.
+    Before changing this option, please read \link{\code{triplex.score.table}}
+    help carefully.
   }
   \item{lambda_par}{
     Lambda for parallel triplex types 0,1,2,3. Default for prokaryotic

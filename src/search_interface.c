@@ -29,11 +29,11 @@ int act_dl_list;
 /**
  * Fill other scoring and group tables
  */
-void tables_fill()
+void tables_fill(int score[NBASES][NBASES], int group[NBASES][NBASES])
 {
 	/* i.e.
-	tab_score[1][A][T] = tab_score[0][A][A];
-	tab_bound[1][A][T] = tab_bound[0][A][A];
+	tab_score[1][A][T] = score[A][A];
+	tab_bound[1][A][T] = group[0][A][A];
 	*/
 	
 }
