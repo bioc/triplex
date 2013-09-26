@@ -53,3 +53,34 @@ T_STRAND   = 9
 ST_PROKARYOTIC = 0
 ST_EUKARYOTIC  = 1
 ST_AUTOMATIC   = 2 # Not supported yet
+
+
+###
+## Score/group table size
+##
+NBASES = 4
+
+###
+## Scoring constants
+##
+TM = -9
+TS = 2
+TW = 1
+
+###
+## Isomorphic group constants
+##
+IN = 0
+IA = 1
+IB = 2
+IC = 3
+ID = 4
+IE = 5
+
+###
+## Nucleic acids constants
+##
+A = 1
+C = 2
+G = 3
+T = 4

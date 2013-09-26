@@ -25,6 +25,32 @@ t_dl_list dl_list, dl_list_arr[8];
 int act_dl_list;
 
 
+
+/**
+ * Fill other scoring and group tables
+ */
+void tables_fill()
+{
+	/* i.e.
+	tab_score[1][A][T] = tab_score[0][A][A];
+	tab_bound[1][A][T] = tab_bound[0][A][A];
+	*/
+	
+}
+
+
+/**
+ * Save integer R-matrix into integer C-array
+ * 
+ */
+void matrix_to_array(int *r_matrix, int *c_array)
+{
+	
+	
+	
+}
+
+
 /**
  * Decode DNAString object
  * @see IRanges_interface, Biostrings_interface
@@ -171,10 +197,17 @@ void save_result(
  * @param dnaobject DNAString object
  * @param type      Triplex type vector
  * @param rparams   Custom algorithm options
+ * @param st_par Score table for parallel triplexes
+ * @param st_apar Score table for antiparallel triplexes
+ * @param gt_par Isogroup table for parallel triplexes
+ * @param gt_apar Isogroup table for antiparallel triplexes
  * @param pbw       Progress bar width
  * @return List
  */
-SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP seq_type, SEXP rparams, SEXP pbw)
+SEXP triplex_search(
+	SEXP dnaobject, SEXP type, SEXP seq_type, SEXP rparams,
+	SEXP st_par, SEXP st_apar, SEXP gt_par, SEXP gt_apar,
+	SEXP pbw)
 {
    SEXP list;
 	

@@ -40,6 +40,31 @@ validate_seq_type <- function(seq_type)
 }
 
 ###
+## Validate score or group table
+##
+validate_table <- function(table, type)
+{
+	if (table == 'default')
+	{# Return default tables
+		if (type == 'score')
+			return(triplex.score.table())
+		else if (type == 'group')
+			return(triplex.group.table())
+	}
+	
+	if (is.null(table$par) || is.null(table$apar))
+		error("Incomplete custom table.")
+	
+	if (!setequal(dim(table$par), dim(table$apar)) || !setequal(dim(table$par), c(NBASES, NBASES)))
+		error("Invalid size of custom table.")
+	
+	table$par <- as.integer(table$par)
+	table$apar <- as.integer(table$apar)
+	
+	return(table)
+}
+
+###
 ## Convert storage mode to double if possible
 ##
 to_double <- function(val)
@@ -85,6 +110,8 @@ triplex.search <- function(
 	min_loop    = 3,
 	max_loop    = 10,
 	seq_type    = 'eukaryotic',
+	score_table = 'default',
+	group_table = 'default',
 	lambda_par  = 'default',
 	lambda_apar = 'default',
 	mu_par      = 'default',
@@ -173,8 +200,14 @@ triplex.search <- function(
 	
 	type <- validate_type(type)
 	seq_type <- validate_seq_type(seq_type)
+	score_table <- validate_table(score_table, 'score')
+	group_table <- validate_table(group_table, 'group')
 	
-	txs <- .Call("triplex_search", dna, type, seq_type, p, as.integer(getOption("width")))
+	txs <- .Call(
+		"triplex_search", dna, type, seq_type, p,
+		score_table$par, score_table$apar,
+		group_table$par, group_table$apar,
+		as.integer(getOption("width")))
 	
 	strand <- txs[[T_STRAND]]
 	s <- character()

@@ -15,7 +15,9 @@ export(
 	triplex.search,
 	triplex.diagram,
 	triplex.3D,
-	triplex.alignment
+	triplex.alignment,
+	triplex.score.table,
+	triplex.group.table
 )
 
 exportMethods(

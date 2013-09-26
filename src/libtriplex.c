@@ -125,7 +125,7 @@ Score Matrix:    column            row
 // Triplet missmatch indication
 #define TM -9
 
-const int tab_score[NUM_TRI_TYPES][NBASES][NBASES] =
+int tab_score[NUM_TRI_TYPES][NBASES][NBASES] =
 {// Tabulated triplet score
  /*
   * Parallel
@@ -197,7 +197,7 @@ const int tab_score[NUM_TRI_TYPES][NBASES][NBASES] =
 #define ID 4
 #define IE 5
 
-const int tab_bound[NUM_TRI_TYPES][NBASES][NBASES] =
+int tab_bound[NUM_TRI_TYPES][NBASES][NBASES] =
 {// Tabulated isomorphic groups
  /*
   * Parallel

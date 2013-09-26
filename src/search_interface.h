@@ -46,7 +46,10 @@ typedef enum
 } rparams_t;
 
 
-SEXP triplex_search(SEXP dnaobject, SEXP type, SEXP seq_type, SEXP params, SEXP pbw);
+SEXP triplex_search(
+	SEXP dnaobject, SEXP type, SEXP seq_type, SEXP params,
+	SEXP st_par, SEXP st_apar, SEXP gt_par, SEXP gt_apar,
+	SEXP pbw);
 seq_t decode_DNAString(SEXP dnaobject, int seq_type);
 void save_result(
 	int start, int end,    int score, double pvalue, int insdel,
