@@ -43,64 +43,64 @@ void score_group_tables_fill(
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[0][i][j] = score_par[i][COMP[j]];
-			tab_bound[0][i][j] = group_par[i][COMP[j]];
+			TAB_SCORE[0][i][j] = score_par[i][COMP[j]];
+			TAB_GROUP[0][i][j] = group_par[i][COMP[j]];
 		}
 
 	/* Type 1 */
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[1][i][j] = score_par[j][COMP[i]];
-			tab_bound[1][i][j] = group_par[j][COMP[i]];
+			TAB_SCORE[1][i][j] = score_par[j][COMP[i]];
+			TAB_GROUP[1][i][j] = group_par[j][COMP[i]];
 		}
 
 	/* Type 2 */
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[2][i][j] = score_par[COMP[i]][j];
-			tab_bound[2][i][j] = group_par[COMP[i]][j];
+			TAB_SCORE[2][i][j] = score_par[COMP[i]][j];
+			TAB_GROUP[2][i][j] = group_par[COMP[i]][j];
 		}
 
 	/* Type 3 */
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[3][i][j] = score_par[COMP[j]][i];
-			tab_bound[3][i][j] = group_par[COMP[j]][i];
+			TAB_SCORE[3][i][j] = score_par[COMP[j]][i];
+			TAB_GROUP[3][i][j] = group_par[COMP[j]][i];
 		}
 
 	/* Type 4 */
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[4][i][j] = score_apar[COMP[i]][COMP[j]];
-			tab_bound[4][i][j] = group_apar[COMP[i]][COMP[j]];
+			TAB_SCORE[4][i][j] = score_apar[COMP[i]][COMP[j]];
+			TAB_GROUP[4][i][j] = group_apar[COMP[i]][COMP[j]];
 		}
 
 	/* Type 5 */
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[5][i][j] = score_apar[COMP[j]][COMP[i]];
-			tab_bound[5][i][j] = group_apar[COMP[j]][COMP[i]];
+			TAB_SCORE[5][i][j] = score_apar[COMP[j]][COMP[i]];
+			TAB_GROUP[5][i][j] = group_apar[COMP[j]][COMP[i]];
 		}
 
 	/* Type 6 */
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[6][i][j] = score_apar[i][j];
-			tab_bound[6][i][j] = group_apar[i][j];
+			TAB_SCORE[6][i][j] = score_apar[i][j];
+			TAB_GROUP[6][i][j] = group_apar[i][j];
 		}
 
 	/* Type 7 */
 	for(i = 0; i < NBASES; i++)
 		for(j = 0; j < NBASES; j++)
 		{
-			tab_score[7][i][j] = score_apar[j][i];
-			tab_bound[7][i][j] = group_apar[j][i];
+			TAB_SCORE[7][i][j] = score_apar[j][i];
+			TAB_GROUP[7][i][j] = group_apar[j][i];
 		}
 }
 
@@ -208,15 +208,15 @@ void set_score_group_tables(
 	
 #ifndef NDEBUG
 	int score_backup[NUM_TRI_TYPES][NBASES][NBASES];
-	memcpy(score_backup, tab_score, NUM_TRI_TYPES*NBASES*NBASES*sizeof(int));
+	memcpy(score_backup, TAB_SCORE, NUM_TRI_TYPES*NBASES*NBASES*sizeof(int));
 	int group_backup[NUM_TRI_TYPES][NBASES][NBASES];
-	memcpy(group_backup, tab_bound, NUM_TRI_TYPES*NBASES*NBASES*sizeof(int));
+	memcpy(group_backup, TAB_GROUP, NUM_TRI_TYPES*NBASES*NBASES*sizeof(int));
 #endif
 	
 	score_group_tables_fill(score_par, score_apar, group_par, group_apar);
 
 #ifndef NDEBUG
-	compare_score_group_tables(score_backup, tab_score, group_backup, tab_bound);
+	compare_score_group_tables(score_backup, TAB_SCORE, group_backup, TAB_GROUP);
 #endif
 }
 

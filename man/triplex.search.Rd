@@ -25,8 +25,8 @@ triplex.search(
   lambda_apar = 'default',
   mu_par      = 'default',
   mu_apar     = 'default',
-  rn_par      = 'default'
-  rn_apar     = 'default'
+  rn_par      = 'default',
+  rn_apar     = 'default',
   dtwist_pen  = 'default',
   ins_pen     = 'default',
   iso_pen     = 'default',
@@ -122,10 +122,11 @@ triplex.search(
 
 \note{
 
-If you change the penalization options (\code{dtwist_pen}, \code{ins_pen},
-\code{iso_pen}, \code{iso_bonus}, \code{mis_pen}) or scoring tables,
-you should consider recalculation of P-value constants (\code{lambda},
-\code{mu} and \code{rn}).
+If you modify the penalization options (\code{dtwist_pen}, \code{ins_pen},
+\code{iso_pen}, \code{iso_bonus}, \code{mis_pen}), scoring tables (\code{score_table})
+or isogroup tables (\code{group_table}),
+you should consider changing also default P-value constants (\code{lambda},
+\code{mu} and \code{rn}) to get relevant P-values.
 
 }
 
@@ -214,6 +215,8 @@ Matej Lexa, Tomas Martinek, Jiri Hon
 
 \seealso{
 \code{\link{TriplexViews}},
+\code{\link{triplex.score.table}}
+\code{\link{triplex.group.table}}
 \code{\link{triplex.diagram}},
 \code{\link{triplex.3D}},
 \code{\link{triplex.alignment}}
@@ -224,10 +227,10 @@ Matej Lexa, Tomas Martinek, Jiri Hon
 seq <- DNAString("GAAGAAGAAGAAGAAGAAGAAGAAGAAGAA")
 
 # Search specific triplex types (see details section)
-triplex.search(seq, type=c(2,3))
+triplex.search(seq, type=c(2,3), min_score=10, p_value=1)
 
 # Search all triplex types
-t <- triplex.search(seq)
+t <- triplex.search(seq, min_score=10, p_value=1)
 
 # Sort triplexes by score
 t[order(score(t), decreasing=TRUE)]

@@ -133,7 +133,7 @@ Score Matrix:    column            row
 // Triplet missmatch indication
 #define TM -9
 
-int tab_score[NUM_TRI_TYPES][NBASES][NBASES] =
+int TAB_SCORE[NUM_TRI_TYPES][NBASES][NBASES] =
 {// Tabulated triplet score
  /*
   * Parallel
@@ -205,7 +205,7 @@ int tab_score[NUM_TRI_TYPES][NBASES][NBASES] =
 #define ID 4
 #define IE 5
 
-int tab_bound[NUM_TRI_TYPES][NBASES][NBASES] =
+int TAB_GROUP[NUM_TRI_TYPES][NBASES][NBASES] =
 {// Tabulated isomorphic groups
  /*
   * Parallel
@@ -266,7 +266,7 @@ int tab_bound[NUM_TRI_TYPES][NBASES][NBASES] =
 };
 
 
-const int tab_twist[NUM_TRI_TYPES][NBASES][NBASES] =
+const int TAB_TWIST[NUM_TRI_TYPES][NBASES][NBASES] =
 {// Triplet C1-C1-C1 angle
  /*
   * Parallel
@@ -348,8 +348,8 @@ int get_max_bonus(int type, int iso_stay_bonus)
 	{
 		for (int j = 0; j < NBASES; j++)
 		{
-			if (tab_score[type][i][j] > max)
-				max = tab_score[type][i][j];
+			if (TAB_SCORE[type][i][j] > max)
+				max = TAB_SCORE[type][i][j];
 		}
 	}
 	return max + iso_stay_bonus;
@@ -538,7 +538,7 @@ void get_max_score(
 	
 	/* --------------------------------------------------------------- */
 	/* match or mismatch score computation  */
-	incscore = tab_score[tri_type][a][b];
+	incscore = TAB_SCORE[tri_type][a][b];
 	// a trick to have zero or negative scores 
 	// for low quality triplets, changed all incscore comparisons to TM
 	if (incscore > TM)
@@ -546,9 +546,9 @@ void get_max_score(
 		mm_score = d->score + incscore;
 		if (d->dp_rule == DP_MATCH)
 		{// Check isomorphic group
-			if ((tab_bound[tri_type][a][b] != d->bound) &&
-			    (abs(tab_twist[tri_type][a][b] - d->twist) > p->dtwist ) &&
-			    (abs(tab_twist[tri_type][a][b] - d->twist + d->dtwist) > p->dtwist))
+			if ((TAB_GROUP[tri_type][a][b] != d->bound) &&
+			    (abs(TAB_TWIST[tri_type][a][b] - d->twist) > p->dtwist ) &&
+			    (abs(TAB_TWIST[tri_type][a][b] - d->twist + d->dtwist) > p->dtwist))
 			{
 				mm_score -= p->iso_change;
 			}
@@ -575,13 +575,13 @@ void get_max_score(
 		if (incscore > TM)
 		{// Match
 // 			res.dp_rule = DP_MATCH;
-// 			res.bound = tab_bound[tri_type][a][b];
-// 			res.twist = tab_twist[tri_type][a][b];
+// 			res.bound = TAB_GROUP[tri_type][a][b];
+// 			res.twist = TAB_TWIST[tri_type][a][b];
 // 			res.dtwist = res.twist - d->twist;
 			d->dp_rule = DP_MATCH;
-			d->bound = tab_bound[tri_type][a][b];
-			d->dtwist = tab_twist[tri_type][a][b] - d->twist;
-			d->twist = tab_twist[tri_type][a][b];
+			d->bound = TAB_GROUP[tri_type][a][b];
+			d->dtwist = TAB_TWIST[tri_type][a][b] - d->twist;
+			d->twist = TAB_TWIST[tri_type][a][b];
 			
 // 			if (mm_score >= res.max_score)
 			if (mm_score >= d->max_score)

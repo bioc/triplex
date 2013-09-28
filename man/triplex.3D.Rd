@@ -76,7 +76,7 @@ Kamil Rajdl, Jiri Hon
 
 \examples{
 seq <- DNAString("GGAAAGCAATGCCAGGCAGGG")
-t <- triplex.search(seq)
+t <- triplex.search(seq, min_score=10, p_value=1)
 \dontrun{
 triplex.3D(t[1])
 }

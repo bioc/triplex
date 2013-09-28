@@ -36,7 +36,7 @@ validate_seq_type <- function(seq_type)
 	else if (seq_type == 'eukaryotic')
 		seq_type = as.integer(ST_EUKARYOTIC)
 	else
-		error("Invalid sequence type. Valid options are prokaryotic or eukaryotic.")
+		stop("Invalid sequence type. Valid options are prokaryotic or eukaryotic.")
 }
 
 ###
@@ -53,10 +53,10 @@ validate_table <- function(table, type)
 	}
 	
 	if (is.null(table$par) || is.null(table$apar))
-		error("Incomplete custom table.")
+		stop("Incomplete custom table.")
 	
 	if (!setequal(dim(table$par), dim(table$apar)) || !setequal(dim(table$par), c(NBASES, NBASES)))
-		error("Invalid size of custom table.")
+		stop("Invalid size of custom table.")
 	
 	table$par <- as.integer(table$par)
 	table$apar <- as.integer(table$apar)
@@ -144,7 +144,12 @@ triplex.search <- function(
 		 mis_pen != 'default')
 		warning(
 			'Default penalization options were changed. You should consider recalculation
-			of P-value constants (mi, lambda, rn) . For details see vignette.')
+			of P-value constants (mu, lambda, rn). For details see vignette.')
+	
+	if (score_table != 'default' || group_table != 'default')
+		warning(
+			'Default scoring tables or isgroup tables were changed. You should consider
+			recalculation of P-value constants (mu, lambda, rn). For details see vignette.')
 	
 	# Set default penalizations
 	dtwist_pen = pen_set(dtwist_pen, 7)

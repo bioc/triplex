@@ -47,11 +47,13 @@ sequences}, In: Bioinformatics, Vol. 27, No. 18, 2011, Oxford, GB, p.
 
 \examples{
 seq <- DNAString("GGAAAGCAATGCCAGGCAGGG")
-t <- triplex.search(seq)
+t <- triplex.search(seq, min_score=10, p_value=1)
 triplex.diagram(t[1])
 \dontrun{
 triplex.3D(t[1])
 }
+triplex.score.table()
+triplex.group.table()
 }
 
 \keyword{package}

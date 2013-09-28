@@ -127,7 +127,7 @@ is to use \code{\link{triplex.search}} function.
 
 \examples{  
 seq <- DNAString("GAAGAAGAAGAAGAAGAAGAAGAAGAAGAA")
-t <- triplex.search(seq)
+t <- triplex.search(seq, min_score=10, p_value=1)
 start(t)
 end(t)
 score(t)

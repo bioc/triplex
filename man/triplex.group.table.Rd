@@ -1,37 +1,41 @@
-\name{triplex.score.table}
-\alias{triplex.score.table}
+\name{triplex.group.table}
+\alias{triplex.group.table}
 
-\title{Get default scoring tables}
+\title{Get default isogroup tables}
 
 \description{
-The \code{triplex.score.table} function returns default scoring tables
+The \code{triplex.group.table} function returns default isogroup tables
 for parallel and antiparallel triplex types.
 }
 
 \usage{
-triplex.score.table()
-}
-
-
-\note{
-
-If you change the scoring tables,
-you should consider recalculation of P-value constants (\code{lambda},
-\code{mu} and \code{rn}).
-
+triplex.group.table()
 }
 
 \details{
 
-The \code{triplex.search} function identifies potential intramolecular
-triplex-forming sequences in DNA sequence represented as
-a \code{\link{DNAString}} object.
+This function is used by \code{\link{triplex.search}} function to get
+default isogroup tables. These tables correspond exactly with Table 1 published
+in (Lexa, 2011) and they represent the isomorphic groups of triplets.
+
+As a common triplet structure is H.WC:WC, to customize isogroup tables
+just use H as a row index, WC as a column index, then set desired group number and
+pass such modified tables through \code{group_table} option of \code{\link{triplex.search}}
+interface.
 
 }
 
 \value{
 List of two matrixes, one for parallel triplex types and the other one
 for antiparallel.
+}
+
+\note{
+
+If you modify the isogroup tables,
+you should consider changing also default P-value constants (\code{lambda},
+\code{mu} and \code{rn}), because these are valid just for the default isogroup tables.
+
 }
 
 \references{
@@ -46,6 +50,7 @@ Tomas Martinek, Jiri Hon
 }
 
 \seealso{
+\code{\link{triplex.score.table}}
 \code{\link{triplex.search}},
 \code{\link{TriplexViews}},
 \code{\link{triplex.diagram}},
@@ -54,17 +59,5 @@ Tomas Martinek, Jiri Hon
 }
 
 \examples{
-# GAA triplet repeats involved in Friedreichs's ataxia
-seq <- DNAString("GAAGAAGAAGAAGAAGAAGAAGAAGAAGAA")
-
-# Search specific triplex types (see details section)
-triplex.search(seq, type=c(2,3))
-
-# Search all triplex types
-t <- triplex.search(seq)
-
-# Sort triplexes by score
-t[order(score(t), decreasing=TRUE)]
+triplex.group.table()
 }
-
-\keyword{interface}
