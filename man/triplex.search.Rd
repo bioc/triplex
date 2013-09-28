@@ -64,14 +64,14 @@ triplex.search(
   }
   \item{score_table}{
     Scoring table for parallel and antiparallel triplex types. Default
-    is the same as \link{\code{triplex.score.table}} output.
-    Before changing this option, please read \link{\code{triplex.score.table}}
+    is the same as \code{\link{triplex.score.table}} output.
+    Before changing this option, please read \code{\link{triplex.score.table}}
     help carefully.
   }
   \item{group_table}{
     Isomorphic group table for parallel and antiparallel triplex types. Default
-    is the same as \link{\code{triplex.group.table}} output.
-    Before changing this option, please read \link{\code{triplex.group.table}}
+    is the same as \code{\link{triplex.group.table}} output.
+    Before changing this option, please read \code{\link{triplex.group.table}}
     help carefully.
   }
   \item{lambda_par}{
