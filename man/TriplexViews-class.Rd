@@ -29,10 +29,10 @@ identified in the same DNA sequence (an \code{\link{DNAString}} object).
 Each triplex is defined by its start/end locations, score, P-value,
 insertion number, type, loop start, loop end and strand identification.
 
-TriplexViews object contains also a parameter vector that stores custom
-algorithm options that were used for triplex search. This is necessary
-for proper triplex visualization by \code{\link{triplex.diagram}} and
-\code{\link{triplex.3D}} functions.
+TriplexViews object contains also a parameter vector plus score and group tables
+that stores custom algorithm options that were used for triplex search.
+This is necessary for proper triplex visualization by \code{\link{triplex.diagram}}
+and \code{\link{triplex.3D}} functions.
 }
 
 \details{

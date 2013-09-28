@@ -23,7 +23,7 @@ static const R_CallMethodDef callMethods[] =
 /* algorithm.c */
 	CALLMETHOD_DEF(triplex_search, 9),
 /* triplex_align.c */
-	CALLMETHOD_DEF(triplex_align, 3),
+	CALLMETHOD_DEF(triplex_align, 7),
 	{NULL, NULL, 0}
 };
 

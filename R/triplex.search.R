@@ -47,9 +47,9 @@ validate_table <- function(table, type)
 	if (table == 'default')
 	{# Return default tables
 		if (type == 'score')
-			return(triplex.score.table())
+			table <- triplex.score.table()
 		else if (type == 'group')
-			return(triplex.group.table())
+			table <- triplex.group.table()
 	}
 	
 	if (is.null(table$par) || is.null(table$apar))
@@ -103,7 +103,7 @@ pconst_set <- function(value, prokaryotic, eukaryotic)
 triplex.search <- function(
 	dna,
 	type        = 0:7,
-	min_score   = 10,
+	min_score   = 15,
 	p_value     = 1,
 	min_len     = 6,
 	max_len     = 25,
@@ -207,7 +207,8 @@ triplex.search <- function(
 		"triplex_search", dna, type, seq_type, p,
 		score_table$par, score_table$apar,
 		group_table$par, group_table$apar,
-		as.integer(getOption("width")))
+		as.integer(getOption("width"))
+	)
 	
 	strand <- txs[[T_STRAND]]
 	s <- character()
@@ -225,7 +226,9 @@ triplex.search <- function(
 		lstart = txs[[T_L_START]],
 		lend   = txs[[T_L_END]],
 		strand = s,
-		params = p
+		params = p,
+		score_table = score_table,
+		group_table = group_table
 	)
 	return(tx_views)
 }

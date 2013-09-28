@@ -13,7 +13,9 @@
 setClass("TriplexViews",
 	contains = "XStringViews",
 	representation(
-		params="numeric"
+		params="numeric",
+		score_table="list",
+		group_table="list"
 	)
 )
 
@@ -23,7 +25,8 @@ setClass("TriplexViews",
 ##
 TriplexViews <- function(
 	subject, start, end, score, pvalue, insdel,
-	type, lstart, lend, strand, params=numeric())
+	type, lstart, lend, strand, params,
+	score_table, group_table)
 {
 	view <- newViews(
 		subject,
@@ -31,6 +34,8 @@ TriplexViews <- function(
 		Class = "TriplexViews"
 	)
 	view@params <- params
+	view@score_table <- score_table
+	view@group_table <- group_table
 	
 	mcols(view) <- DataFrame(
 		score  = score,
@@ -319,7 +324,9 @@ setMethod("[", "TriplexViews", function(x, i, j, ..., drop=TRUE)
 		lstart = lstart(x)[i],
 		lend   = lend(x)[i],
 		strand = strand(x)[i],
-		params = x@params
+		params = x@params,
+		score_table = x@score_table,
+		group_table = x@group_table
 	)
 	return(tx_views)
 })

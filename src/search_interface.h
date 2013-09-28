@@ -51,6 +51,7 @@ SEXP triplex_search(
 	SEXP st_par, SEXP st_apar, SEXP gt_par, SEXP gt_apar,
 	SEXP pbw);
 seq_t decode_DNAString(SEXP dnaobject, int seq_type);
+void set_score_group_tables(int *st_par, int *st_apar, int *gt_par, int *gt_apar);
 void save_result(
 	int start, int end,    int score, double pvalue, int insdel,
 	int type,  int lstart, int lend, int strand

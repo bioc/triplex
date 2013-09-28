@@ -102,6 +102,9 @@ typedef struct
 
 extern char CHAR2NUKL[];
 extern const char NUKL2CHAR[];
+extern int tab_score[NUM_TRI_TYPES][NBASES][NBASES];
+extern int tab_bound[NUM_TRI_TYPES][NBASES][NBASES];
+extern const int COMP[NBASES];
 
 void init_CHAR2NUKL_table();
 

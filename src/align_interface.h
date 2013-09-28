@@ -17,6 +17,9 @@
 
 
 void Aprintf(char ch);
-SEXP triplex_align(SEXP seq, SEXP type, SEXP params);
+SEXP triplex_align(
+	SEXP seq, SEXP type, SEXP params, 
+	SEXP st_par, SEXP st_apar, SEXP gt_par, SEXP gt_apar
+);
 
 #endif // ALIGN_INTERFACE_H

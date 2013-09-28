@@ -27,78 +27,197 @@ int act_dl_list;
 
 
 /**
- * Fill other scoring and group tables
+ * Fill scoring and group tables based on user input from R
+ * @param score_par Score table for parallels
+ * @param score_apar Score table for antiparallels
+ * @param group_par Isogroup table for parallels
+ * @param group_apar Isogroup table for antiparallels
  */
-void tables_fill(int score_par[NBASES][NBASES], int group_par[NBASES][NBASES],
-                 int score_apar[NBASES][NBASES], int group_apar[NBASES][NBASES])
+void score_group_tables_fill(
+	int score_par[NBASES][NBASES], int score_apar[NBASES][NBASES],
+	int group_par[NBASES][NBASES], int group_apar[NBASES][NBASES])
 {
-   /* Type 0 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[0][i][j] = score_par[i][COMP[j]];
-	      tab_bound[0][i][j] = group_par[i][COMP[j]];
-      }
+	int i, j;
+	
+	/* Type 0 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[0][i][j] = score_par[i][COMP[j]];
+			tab_bound[0][i][j] = group_par[i][COMP[j]];
+		}
 
-   /* Type 1 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[1][i][j] = score_par[j][COMP[i]];
-	      tab_bound[1][i][j] = group_par[j][COMP[i]];
-      }
+	/* Type 1 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[1][i][j] = score_par[j][COMP[i]];
+			tab_bound[1][i][j] = group_par[j][COMP[i]];
+		}
 
-   /* Type 2 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[2][i][j] = score_par[COMP[i]][j];
-	      tab_bound[2][i][j] = group_par[COMP[i]][j];
-      }
+	/* Type 2 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[2][i][j] = score_par[COMP[i]][j];
+			tab_bound[2][i][j] = group_par[COMP[i]][j];
+		}
 
-   /* Type 3 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[3][i][j] = score_par[COMP[j]][COMP[i]];
-	      tab_bound[3][i][j] = group_par[COMP[j]][COMP[i]];
-      }
+	/* Type 3 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[3][i][j] = score_par[COMP[j]][i];
+			tab_bound[3][i][j] = group_par[COMP[j]][i];
+		}
 
-   /* Type 4 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[4][i][j] = score_apar[COMP[i]][COMP[j]];
-	      tab_bound[4][i][j] = group_apar[COMP[i]][COMP[j]];
-      }
+	/* Type 4 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[4][i][j] = score_apar[COMP[i]][COMP[j]];
+			tab_bound[4][i][j] = group_apar[COMP[i]][COMP[j]];
+		}
 
-   /* Type 5 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[5][i][j] = score_apar[COMP[j]][COMP[i]];
-	      tab_bound[5][i][j] = group_apar[COMP[j]][COMP[i]];
-      }
+	/* Type 5 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[5][i][j] = score_apar[COMP[j]][COMP[i]];
+			tab_bound[5][i][j] = group_apar[COMP[j]][COMP[i]];
+		}
 
-   /* Type 6 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[6][i][j] = score_apar[i][j];
-	      tab_bound[6][i][j] = group_apar[i][j];
-      }
+	/* Type 6 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[6][i][j] = score_apar[i][j];
+			tab_bound[6][i][j] = group_apar[i][j];
+		}
 
-   /* Type 7 */
-   for(i=0;i<NBASES;i++)
-      for(j=0;j<NBASES;j++) {
-	      tab_score[7][i][j] = score_apar[i][j];
-	      tab_bound[7][i][j] = group_apar[j][i];
-      }
+	/* Type 7 */
+	for(i = 0; i < NBASES; i++)
+		for(j = 0; j < NBASES; j++)
+		{
+			tab_score[7][i][j] = score_apar[j][i];
+			tab_bound[7][i][j] = group_apar[j][i];
+		}
 }
 
 
 /**
- * Save integer R-matrix into integer C-array
- * 
+ * Save integer R-matrix saved by columns into integer C-array saved by rows
+ * @param r_matrix R-matrix data saved by columns
+ * @param c_matrix Output C-array saved by rows
+ * @param nrow Number of rows
+ * @param ncol Number of columns
  */
-void matrix_to_array(int *r_matrix, int *c_array)
+void col_matrix_to_row_array(int *r_matrix, int *c_array, int nrow, int ncol)
 {
+	for (int c = 0; c < ncol; c++)
+		for (int r = 0; r < nrow; r++)
+			c_array[r*ncol + c] = r_matrix[c*nrow + r];
+}
+
+
+/**
+ * Print integer table
+ * @param table Table data pointer
+ * @param nrow Number of rows
+ * @param ncol Number of columns
+ */
+void print_table(int *table, int nrow, int ncol)
+{
+	for (int i = 0; i < nrow; i++)
+	{
+		for (int j = 0; j < ncol; j++)
+			Rprintf("%3d ", table[i*nrow + j]);
+		
+		Rprintf("\n");
+	}
+}
+
+
+/**
+ * Check two sets of score and group tables for identity
+ * @param score_old Old score table
+ * @param score_new New score table
+ * @param group_old Old isogroup table
+ * @param group_new New isogroup table
+ */
+void compare_score_group_tables(
+	int score_old[NUM_TRI_TYPES][NBASES][NBASES],
+	int score_new[NUM_TRI_TYPES][NBASES][NBASES],
+	int group_old[NUM_TRI_TYPES][NBASES][NBASES],
+	int group_new[NUM_TRI_TYPES][NBASES][NBASES])
+{
+	int score_marks[NUM_TRI_TYPES], group_marks[NUM_TRI_TYPES];
+	memset(score_marks, 0, NUM_TRI_TYPES*sizeof(int));
+	memset(group_marks, 0, NUM_TRI_TYPES*sizeof(int));
 	
+	for (int t = 0; t < NUM_TRI_TYPES; t++)
+		for (int i = 0; i < NBASES; i++)
+			for (int j = 0; j < NBASES; j++)
+			{
+				if (score_old[t][i][j] != score_new[t][i][j])
+					score_marks[t] = 1;
+				if (group_old[t][i][j] != group_new[t][i][j])
+					group_marks[t] = 1;
+			}
 	
+	int score_diff = 0, group_diff = 0;
 	
+	for (int t = 0; t < NUM_TRI_TYPES; t++)
+	{
+		if (score_marks[t])
+		{
+			score_diff = 1;
+			Rprintf("Old score for %d:\n", t);
+			print_table((int *) score_old[t], NBASES, NBASES);
+			Rprintf("New score for %d:\n", t);
+			print_table((int *) score_new[t], NBASES, NBASES);
+		}
+		if (group_marks[t])
+		{
+			group_diff = 1;
+			Rprintf("Old group for %d:\n", t);
+			print_table((int *) group_old[t], NBASES, NBASES);
+			Rprintf("New group for %d:\n", t);
+			print_table((int *) group_new[t], NBASES, NBASES);
+		}
+	}
+	if (!score_diff && !group_diff)
+		Rprintf("Success, no difference.\n");
+}
+
+
+/**
+ * Set score and group tables
+ */
+void set_score_group_tables(
+	int *st_par, int *st_apar, int *gt_par, int *gt_apar)
+{
+	int score_par[NBASES][NBASES], score_apar[NBASES][NBASES],
+	group_par[NBASES][NBASES], group_apar[NBASES][NBASES];
+	
+	/* Convert between R and C representation of matrix */
+	col_matrix_to_row_array(st_par, (int *) score_par, NBASES, NBASES);
+	col_matrix_to_row_array(st_apar, (int *) score_apar, NBASES, NBASES);
+	col_matrix_to_row_array(gt_par, (int *) group_par, NBASES, NBASES);
+	col_matrix_to_row_array(gt_apar, (int *) group_apar, NBASES, NBASES);
+	
+#ifndef NDEBUG
+	int score_backup[NUM_TRI_TYPES][NBASES][NBASES];
+	memcpy(score_backup, tab_score, NUM_TRI_TYPES*NBASES*NBASES*sizeof(int));
+	int group_backup[NUM_TRI_TYPES][NBASES][NBASES];
+	memcpy(group_backup, tab_bound, NUM_TRI_TYPES*NBASES*NBASES*sizeof(int));
+#endif
+	
+	score_group_tables_fill(score_par, score_apar, group_par, group_apar);
+
+#ifndef NDEBUG
+	compare_score_group_tables(score_backup, tab_score, group_backup, tab_bound);
+#endif
 }
 
 
@@ -243,6 +362,29 @@ void save_result(
 
 
 /**
+ * Set lambda, mu and rn static tables
+ * @param p Parameter vector
+ */
+void set_lambda_mu_rn_tables(double *p)
+{
+	LAMBDA[ST_PR][0] = LAMBDA[ST_PR][1] = LAMBDA[ST_PR][2] = LAMBDA[ST_PR][3] = p[P_LAMBDA_PAR_P];
+	LAMBDA[ST_PR][4] = LAMBDA[ST_PR][5] = LAMBDA[ST_PR][6] = LAMBDA[ST_PR][7] = p[P_LAMBDA_APAR_P];
+	LAMBDA[ST_EU][0] = LAMBDA[ST_EU][1] = LAMBDA[ST_EU][2] = LAMBDA[ST_EU][3] = p[P_LAMBDA_PAR_E];
+	LAMBDA[ST_EU][4] = LAMBDA[ST_EU][5] = LAMBDA[ST_EU][6] = LAMBDA[ST_EU][7] = p[P_LAMBDA_APAR_E];
+	
+	MI[ST_PR][0] = MI[ST_PR][1] = MI[ST_PR][2] = MI[ST_PR][3] = p[P_MI_PAR_P];
+	MI[ST_PR][4] = MI[ST_PR][5] = MI[ST_PR][6] = MI[ST_PR][7] = p[P_MI_APAR_P];
+	MI[ST_EU][0] = MI[ST_EU][1] = MI[ST_EU][2] = MI[ST_EU][3] = p[P_MI_PAR_E];
+	MI[ST_EU][4] = MI[ST_EU][5] = MI[ST_EU][6] = MI[ST_EU][7] = p[P_MI_APAR_E];
+	
+	RN[ST_PR][0] = RN[ST_PR][1] = RN[ST_PR][2] = RN[ST_PR][3] = p[P_RN_PAR_P];
+	RN[ST_PR][4] = RN[ST_PR][5] = RN[ST_PR][6] = RN[ST_PR][7] = p[P_RN_APAR_P];
+	RN[ST_EU][0] = RN[ST_EU][1] = RN[ST_EU][2] = RN[ST_EU][3] = p[P_RN_PAR_E];
+	RN[ST_EU][4] = RN[ST_EU][5] = RN[ST_EU][6] = RN[ST_EU][7] = p[P_RN_APAR_E];
+}
+
+
+/**
  * Search triplexes in DNA sequence
  * NOTE .Call entry point
  * @param dnaobject DNAString object
@@ -284,24 +426,11 @@ SEXP triplex_search(
 		.mismatch = p[P_MIS_PEN]
 	};
 	
-	// Set Lambda, Mu and Rn tables
-	LAMBDA[ST_PR][0] = LAMBDA[ST_PR][1] = LAMBDA[ST_PR][2] = LAMBDA[ST_PR][3] = p[P_LAMBDA_PAR_P];
-	LAMBDA[ST_PR][4] = LAMBDA[ST_PR][5] = LAMBDA[ST_PR][6] = LAMBDA[ST_PR][7] = p[P_LAMBDA_APAR_P];
-	LAMBDA[ST_EU][0] = LAMBDA[ST_EU][1] = LAMBDA[ST_EU][2] = LAMBDA[ST_EU][3] = p[P_LAMBDA_PAR_E];
-	LAMBDA[ST_EU][4] = LAMBDA[ST_EU][5] = LAMBDA[ST_EU][6] = LAMBDA[ST_EU][7] = p[P_LAMBDA_APAR_E];
-	
-	MI[ST_PR][0] = MI[ST_PR][1] = MI[ST_PR][2] = MI[ST_PR][3] = p[P_MI_PAR_P];
-	MI[ST_PR][4] = MI[ST_PR][5] = MI[ST_PR][6] = MI[ST_PR][7] = p[P_MI_APAR_P];
-	MI[ST_EU][0] = MI[ST_EU][1] = MI[ST_EU][2] = MI[ST_EU][3] = p[P_MI_PAR_E];
-	MI[ST_EU][4] = MI[ST_EU][5] = MI[ST_EU][6] = MI[ST_EU][7] = p[P_MI_APAR_E];
-	
-	RN[ST_PR][0] = RN[ST_PR][1] = RN[ST_PR][2] = RN[ST_PR][3] = p[P_RN_PAR_P];
-	RN[ST_PR][4] = RN[ST_PR][5] = RN[ST_PR][6] = RN[ST_PR][7] = p[P_RN_APAR_P];
-	RN[ST_EU][0] = RN[ST_EU][1] = RN[ST_EU][2] = RN[ST_EU][3] = p[P_RN_PAR_E];
-	RN[ST_EU][4] = RN[ST_EU][5] = RN[ST_EU][6] = RN[ST_EU][7] = p[P_RN_APAR_E];
-	
 	int *st = INTEGER(seq_type);
 	int *t = INTEGER(type);
+	
+	set_lambda_mu_rn_tables(p);
+	set_score_group_tables(INTEGER(st_par), INTEGER(st_apar), INTEGER(gt_par), INTEGER(gt_apar));
 	
 	seq_t dna = decode_DNAString(dnaobject, st[0]);
 	intv_t *chunk = get_chunks(dna);

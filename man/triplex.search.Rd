@@ -12,7 +12,7 @@ triplex-forming sequences in DNA.
 triplex.search(
   dna, 
   type        = 0:7,
-  min_score   = 10,
+  min_score   = 15,
   p_value     = 1,
   min_len     = 6,
   max_len     = 25,
@@ -66,6 +66,12 @@ triplex.search(
     Scoring table for parallel and antiparallel triplex types. Default
     is the same as \link{\code{triplex.score.table}} output.
     Before changing this option, please read \link{\code{triplex.score.table}}
+    help carefully.
+  }
+  \item{group_table}{
+    Isomorphic group table for parallel and antiparallel triplex types. Default
+    is the same as \link{\code{triplex.group.table}} output.
+    Before changing this option, please read \link{\code{triplex.group.table}}
     help carefully.
   }
   \item{lambda_par}{

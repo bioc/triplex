@@ -35,9 +35,15 @@ void Aprintf(char ch)
  * @param seq     Character vector with sequence
  * @param type    Triplex type
  * @param rparams Params of search algorithm
+ * @param st_par Score table for parallel triplexes
+ * @param st_apar Score table for antiparallel triplexes
+ * @param gt_par Isogroup table for parallel triplexes
+ * @param gt_apar Isogroup table for antiparallel triplexes
  * @return aligned sequence for visualization
  */
-SEXP triplex_align(SEXP seq, SEXP type, SEXP rparams)
+SEXP triplex_align(
+	SEXP seq, SEXP type, SEXP rparams,
+	SEXP st_par, SEXP st_apar, SEXP gt_par, SEXP gt_apar)
 {
 	double *p = REAL(rparams);
 	double *t = REAL(type);
@@ -62,6 +68,8 @@ SEXP triplex_align(SEXP seq, SEXP type, SEXP rparams)
 	};
 	
 	seq_t dna = decode_DNAString(seq, ST_AU);
+	
+	set_score_group_tables(INTEGER(st_par), INTEGER(st_apar), INTEGER(gt_par), INTEGER(gt_apar));
 	
 	// Ininitalize global alignment string
 	tx_align.len = 2 * dna.len;

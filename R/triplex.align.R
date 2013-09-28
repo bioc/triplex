@@ -33,7 +33,11 @@ triplex.align <- function(t)
 	p[MIN_LOOP] <- to_double(lwidth(t))
 	type <- to_double(type(t))
 	
-	triplex <- .Call("triplex_align", seq, type, p)
+	triplex <- .Call(
+		"triplex_align", seq, type, p,
+		t@score_table$par, t@score_table$apar,
+		t@group_table$par, t@group_table$apar
+	)
 	
 	# Make reverse complement
 	if (strand(t) == "-")
