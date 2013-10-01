@@ -104,7 +104,7 @@ triplex.search <- function(
 	dna,
 	type        = 0:7,
 	min_score   = 15,
-	p_value     = 1,
+	p_value     = 0.05,
 	min_len     = 6,
 	max_len     = 25,
 	min_loop    = 3,
@@ -235,5 +235,12 @@ triplex.search <- function(
 		score_table = score_table,
 		group_table = group_table
 	)
+	if (length(start(tx_views)) == 0)
+		message(
+			"There was no triplexes found with the given options.\n
+			TIP: Try to modify search options (p_value, min_score, etc.),\n
+			for details see ?triplex.search."
+		)
+	
 	return(tx_views)
 }

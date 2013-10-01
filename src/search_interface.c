@@ -40,64 +40,64 @@ void score_group_tables_fill(
 	int i, j;
 	
 	/* Type 0 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[0][i][j] = score_par[i][COMP[j]];
 			TAB_GROUP[0][i][j] = group_par[i][COMP[j]];
 		}
-
+	
 	/* Type 1 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[1][i][j] = score_par[j][COMP[i]];
 			TAB_GROUP[1][i][j] = group_par[j][COMP[i]];
 		}
-
+	
 	/* Type 2 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[2][i][j] = score_par[COMP[i]][j];
 			TAB_GROUP[2][i][j] = group_par[COMP[i]][j];
 		}
-
+	
 	/* Type 3 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[3][i][j] = score_par[COMP[j]][i];
 			TAB_GROUP[3][i][j] = group_par[COMP[j]][i];
 		}
-
+	
 	/* Type 4 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[4][i][j] = score_apar[COMP[i]][COMP[j]];
 			TAB_GROUP[4][i][j] = group_apar[COMP[i]][COMP[j]];
 		}
-
+	
 	/* Type 5 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[5][i][j] = score_apar[COMP[j]][COMP[i]];
 			TAB_GROUP[5][i][j] = group_apar[COMP[j]][COMP[i]];
 		}
-
+	
 	/* Type 6 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[6][i][j] = score_apar[i][j];
 			TAB_GROUP[6][i][j] = group_apar[i][j];
 		}
-
+	
 	/* Type 7 */
-	for(i = 0; i < NBASES; i++)
-		for(j = 0; j < NBASES; j++)
+	for (i = 0; i < NBASES; i++)
+		for (j = 0; j < NBASES; j++)
 		{
 			TAB_SCORE[7][i][j] = score_apar[j][i];
 			TAB_GROUP[7][i][j] = group_apar[j][i];
