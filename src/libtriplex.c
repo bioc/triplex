@@ -201,9 +201,9 @@ int TAB_SCORE[NUM_TRI_TYPES][NBASES][NBASES] =
 #define IA 1
 #define IB 2
 // Antiparallel triplets
-#define IC 3
-#define ID 4
-#define IE 5
+#define IC 1
+#define ID 2
+#define IE 3
 
 int TAB_GROUP[NUM_TRI_TYPES][NBASES][NBASES] =
 {// Tabulated isomorphic groups

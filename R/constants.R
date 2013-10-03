@@ -73,9 +73,9 @@ TW = 1
 IN = 0
 IA = 1
 IB = 2
-IC = 3
-ID = 4
-IE = 5
+IC = 1
+ID = 2
+IE = 3
 
 ###
 ## Nucleic acids constants

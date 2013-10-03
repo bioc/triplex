@@ -286,6 +286,9 @@ setAs("TriplexViews", "DNAStringSet", function(from)
 ##
 setAs("TriplexViews", "GRanges", function(from)
 {
+	seqlen <- length(subject(from))
+	names(seqlen) <- "chr1"
+	
 	GRanges(
 		"chr1",
 		IRanges(start(from), end(from)),
@@ -295,7 +298,8 @@ setAs("TriplexViews", "GRanges", function(from)
 		pvalue = format(pvalue(from), scientific=TRUE, digits=2),
 		lstart = lstart(from),
 		lend = lend(from),
-		indels = ins(from)
+		indels = ins(from),
+		seqlengths = seqlen
 	)
 })
 

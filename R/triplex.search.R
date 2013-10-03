@@ -236,11 +236,11 @@ triplex.search <- function(
 		group_table = group_table
 	)
 	if (length(start(tx_views)) == 0)
-		message(
-			"There was no triplexes found with the given options.\n
-			TIP: Try to modify search options (p_value, min_score, etc.),\n
-			for details see ?triplex.search."
-		)
+		message(paste(
+			"NOTICE: There was no triplexes found with the given options.\n",
+			"TIP: Try to modify search options (p_value, min_score, etc.),\n",
+			"     for details see ?triplex.search.",
+		sep=''))
 	
 	return(tx_views)
 }
