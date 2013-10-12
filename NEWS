@@ -3,20 +3,20 @@ CHANGES IN VERSION 1.2.0
 
 NEW FEATURES
 
-o It's now possible to set custom scoring and isogroup tables through
-  triplex.search interface.
+  o It's now possible to set custom scoring and isogroup tables through
+    triplex.search interface.
 
-o New triplex.score.table and triplex.group.table functions for getting
-  default scoring and isogroup tables to make the customization process
-  almost effortless.
+  o New triplex.score.table and triplex.group.table functions for getting
+    default scoring and isogroup tables to make the customization process
+    almost effortless.
 
-OPTIMIZATIONS
+  OPTIMIZATIONS
 
-o Dynamic algorithm optimization technique implemented as a computational
-  reduction based on minimal score option.
+  o Dynamic algorithm optimization technique implemented as a computational
+    reduction based on minimal score option.
 
-o Optimized usage of processor data cache - the computation was divided
-  into smaller pieces to prevent cache misses.
+  o Optimized usage of processor data cache - the computation was divided
+    into smaller pieces to prevent cache misses.
 
 
 CHANGES IN VERSION 1.0.0
@@ -24,16 +24,16 @@ CHANGES IN VERSION 1.0.0
 
 BUG FIXES
 
-o Fixed P-value definition, Fixed P-value definition, now it depends on
-  sequence length. See vignette for details.
+  o Fixed P-value definition, Fixed P-value definition, now it depends on
+    sequence length. See vignette for details.
 
-o Fixed splitting sequence into smaller computational pieces. The end
-  of larger sequences was not searched properly.
+  o Fixed splitting sequence into smaller computational pieces. The end
+    of larger sequences was not searched properly.
 
-o Fixed handling of special IUPAC symbols (R, M, W, D, etc.). These are
-  now cut off as N and - symbols.
+  o Fixed handling of special IUPAC symbols (R, M, W, D, etc.). These are
+    now cut off as N and - symbols.
 
-o Fixed scoring matrices for matches and geometrical compatibility. They
-  were combined with wrong types of triplexes. Among other things this
-  caused the output of the program to be slightly innaccurate for certain
-  types of triplexes.
+  o Fixed scoring matrices for matches and geometrical compatibility. They
+    were combined with wrong types of triplexes. Among other things this
+    caused the output of the program to be slightly innaccurate for certain
+    types of triplexes.
