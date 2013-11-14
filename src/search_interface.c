@@ -352,7 +352,7 @@ void set_score_group_tables(
 seq_t decode_DNAString(SEXP dnaobject, int seq_type)
 {
 	// Extract char sequence from R object
-	cachedCharSeq x = cache_XRaw(dnaobject);
+	Chars_holder x = hold_XRaw(dnaobject);
 	// Initialize structure for decoded string
 	seq_t dna;
 	dna.len = x.length;
