@@ -1,0 +1,23 @@
+citHeader("To cite the 'triplex' package in publications use:")
+
+citEntry(
+	entry="Article",
+	title = "Triplex: an R/Bioconductor package for identification and visualization of potential intramolecular triplex patterns in DNA sequences",
+	author = personList(
+		person("Jiri", "Hon"),
+		person("Tomas", "Martinek"),
+		person("Kamil", "Rajdl"),
+		person("Matej", "Lexa")
+	),
+	year = "2013", 
+	doi = "10.1093/bioinformatics/btt299",
+	url = "http://bioinformatics.oxfordjournals.org/content/early/2013/05/24/bioinformatics.btt299.abstract",
+	eprint = "http://bioinformatics.oxfordjournals.org/content/early/2013/05/24/bioinformatics.btt299.full.pdf+html", 
+	journal = "Bioinformatics",
+
+	textVersion = paste(
+		"Hon J, Martinek T, Rajdl K, Lexa M.",
+		"Triplex: an R/Bioconductor package for identification and visualization of potential intramolecular triplex patterns in DNA sequences.",
+		"Bioinformatics. 2013 Aug 1;29(15):1900-1.",
+		"doi: 10.1093/bioinformatics/btt299.")
+)
