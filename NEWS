@@ -10,8 +10,6 @@ NEW FEATURES
     default scoring and isogroup tables to make the customization process
     almost effortless.
 
-  OPTIMIZATIONS
-
   o Dynamic algorithm optimization technique implemented as a computational
     reduction based on minimal score option.
 
