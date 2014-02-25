@@ -19,7 +19,6 @@
 \alias{strand,TriplexViews-method}
 \alias{as.character,TriplexViews-method}
 \alias{toString,TriplexViews-method}
-\alias{[,TriplexViews-method}
 
 \title{The TriplexViews class}
 
@@ -102,10 +101,6 @@ defined for TriplexViews objects:
 	\item{}{
 	\code{toString(x)}:
 	Converts \code{TriplexViews} object into vector of strings.
-	}
-	\item{}{
-	\code{[x]}:
-	Index accessor.
 	}
 	}
 }

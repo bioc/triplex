@@ -310,30 +310,30 @@ setAs("TriplexViews", "GRanges", function(from)
 
 ### Always behaves like an endomorphism (i.e. ignores the 'drop' argument and
 ### behaves like if it was actually set to FALSE).
-setMethod("[", "TriplexViews", function(x, i, j, ..., drop=TRUE)
-{
-	if (!missing(j) || length(list(...)) > 0L)
-		stop("invalid subsetting")
-	if (missing(i))
-		i <- seq_len(length(x))
-	
-	tx_views <- TriplexViews(
-		subject(x),
-		start  = start(x)[i],
-		end    = end(x)[i],
-		score  = score(x)[i],
-		pvalue = pvalue(x)[i],
-		insdel = ins(x)[i],
-		type   = type(x)[i],
-		lstart = lstart(x)[i],
-		lend   = lend(x)[i],
-		strand = strand(x)[i],
-		params = x@params,
-		score_table = x@score_table,
-		group_table = x@group_table
-	)
-	return(tx_views)
-})
+# setMethod("[", "TriplexViews", function(x, i, j, ..., drop=TRUE)
+# {
+# 	if (!missing(j) || length(list(...)) > 0L)
+# 		stop("invalid subsetting")
+# 	if (missing(i))
+# 		i <- seq_len(length(x))
+# 	
+# 	tx_views <- TriplexViews(
+# 		subject(x),
+# 		start  = start(x)[i],
+# 		end    = end(x)[i],
+# 		score  = score(x)[i],
+# 		pvalue = pvalue(x)[i],
+# 		insdel = ins(x)[i],
+# 		type   = type(x)[i],
+# 		lstart = lstart(x)[i],
+# 		lend   = lend(x)[i],
+# 		strand = strand(x)[i],
+# 		params = x@params,
+# 		score_table = x@score_table,
+# 		group_table = x@group_table
+# 	)
+# 	return(tx_views)
+# })
 
 
 ###

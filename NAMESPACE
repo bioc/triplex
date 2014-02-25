@@ -23,5 +23,5 @@ export(
 exportMethods(
 	show, score, pvalue, ins,
 	type, lstart, lwidth, lend, strand,
-	as.character, toString, "["
+	as.character, toString
 )
