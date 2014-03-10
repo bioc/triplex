@@ -84,7 +84,7 @@ triplex.search(
   }
   \item{mu_par}{
     Mu for parallel triplex types 0,1,2,3. Default for prokaryotic
-    sequence is 7.4805, for eukaryotic 0.8433.
+    sequence is 7.4805, for eukaryotic 7.5835.
   }
   \item{mu_apar}{
     Mu for antiparallel triplex types 4,5,6,7. Default for prokaryotic
