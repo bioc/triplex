@@ -364,7 +364,7 @@ seq_t decode_DNAString(SEXP dnaobject, int seq_type)
 	
 	for (i = 0; i < dna.len; i++)
 	{
-		ch = CHAR2NUKL[tolower(DNAdecode(x.seq[i]))];
+		ch = CHAR2NUKL[tolower(DNAdecode(x.ptr[i]))];
 		if (ch == INVALID_CHAR)
 		{
 			free(dna.seq);
