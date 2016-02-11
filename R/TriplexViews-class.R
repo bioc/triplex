@@ -28,7 +28,7 @@ TriplexViews <- function(
 	type, lstart, lend, strand, params,
 	score_table, group_table)
 {
-	view <- newViews(
+	view <- IRanges:::new_Views(
 		subject,
 		start = start, end = end,
 		Class = "TriplexViews"
