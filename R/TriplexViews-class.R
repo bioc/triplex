@@ -59,7 +59,7 @@ setGeneric("pvalue", function(x, ...) standardGeneric("pvalue"))
 setMethod("pvalue", "TriplexViews", function(x) mcols(x)$pvalue)
 
 setGeneric("ins", function(x, ...) standardGeneric("ins"))
-setMethod("ins", "TriplexViews", function(x) mcols(x)$ins)
+setMethod("ins", "TriplexViews", function(x) mcols(x)$insdel)
 
 setMethod("type", "TriplexViews", function(x) mcols(x)$type)
 
