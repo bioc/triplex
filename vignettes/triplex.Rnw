@@ -10,6 +10,7 @@
 
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \maketitle
 
@@ -460,43 +461,6 @@ hist(score(t), breaks=20)
 
 <<fig=TRUE>>=
 plot(coverage(ts[0:length(t)]), type="s", col="grey75")
-@
-
-\newpage
-
-\item Show triplex distribution along the chromosome using GenomeGraphs
-
-<<fig=TRUE>>=
-library(GenomeGraphs)
-mart <- useMart("ensembl", dataset = "celegans_gene_ensembl")
-
-# Set up basic GenomeGraphs annotation tracks
-ideog <- makeIdeogram(chromosome = "X")
-genomeAxis <- makeGenomeAxis()
-genesplus <- makeGeneRegion(start = 0, end = 62000, strand = "+",
-   chromosome = "X", biomart = mart)
-genesminus <- makeGeneRegion(start = 0, end = 62000, strand = "-",
-   chromosome = "X", biomart = mart)
-
-# Set up triplex annotation tracks
-tall <- as(t,"GRanges")
-ta <- makeAnnotationTrack(
-  start = start(tall[which(end(tall)<62000)]),
-  end = end(tall[which(end(tall)<62000)]),
-  feature = "gene_model",
-  dp = DisplayPars(gene_model = "grey")
-)
-ta1 <- makeAnnotationTrack(
-  start = start(tall[which(end(tall)<62000 & score(tall)>20)]),
-  end = end(tall[which(end(tall)<62000 & score(tall)>20)]),
-  feature = "gene_model",
-  dp = DisplayPars(gene_model = "darkblue")
-)
-
-# Plot the entire thing
-gdPlot(list(fwd = genesplus, GENES = genomeAxis, rev = genesminus,
-   weak = ta, strong = ta1, chrX = ideog), minBase = 0,
-   maxBase = 62000, labelRot = 0)
 @
 
 \end{enumerate}
