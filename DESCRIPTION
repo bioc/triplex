@@ -26,5 +26,5 @@ biocViews: SequenceMatching, GeneRegulation
 Depends: R (>= 2.15.0), S4Vectors (>= 0.5.14), IRanges (>= 2.5.27),
   XVector (>= 0.11.6), Biostrings (>= 2.39.10)
 Imports: methods, grid, GenomicRanges
-Suggests: rgl (>= 0.93.932), BSgenome.Celegans.UCSC.ce10, rtracklayer, GenomeGraphs
+Suggests: rgl (>= 0.93.932), BSgenome.Celegans.UCSC.ce10, rtracklayer
 LinkingTo: S4Vectors, IRanges, XVector, Biostrings
